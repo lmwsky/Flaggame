@@ -1,0 +1,6 @@
+<resources>
+    <string name="app_name">Flaggame</string>
+    <string name="endgame">结束游戏</string>
+    <string name="startgame">开始游戏</string>
+    <string name="attract">攻击</string>
+</resources>
