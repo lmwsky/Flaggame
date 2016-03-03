@@ -21,6 +21,7 @@ import com.example.isky.flaggame.role.SignMarkerManager;
 
 import java.util.ArrayList;
 
+import util.GetScore;
 import util.RandUtil;
 
 /**
@@ -28,13 +29,13 @@ import util.RandUtil;
  * 游戏管理者的接口
  */
 public abstract class GameManager {
-    protected int GAMESTATE = STATE_UNINT;
     public static final int STATE_UNINT = 0;//尚未初始化的状态，上一盘游戏结束也会进入这个状态
     public static final int STATE_INIT = 1;//已经初始化但未开始游戏
     public static final int STATE_START = 2;//游戏进行中
     public static final int STATE_STOP = 3;//游戏暂停
     public static OnFixedSignListener onFixedSignListener;
     public static OnOtherRoleSignlistener onOtherRolesignlistener;
+    protected int GAMESTATE = STATE_UNINT;
     protected GameHandler handler;//其他线程消息处理器
     protected Activity activity;
     GameManager(Activity activity, AMap aMap) {
@@ -79,7 +80,7 @@ public abstract class GameManager {
             RoleSign mainplayer = SignMarkerManager.getInstance().getMainPlayer();
             if (mainplayer == null)
                 return;
-            ArrayList<RoleSign> otherteam = SignMarkerManager.getInstance().getOtherTeam(mainplayer.getTeam());
+            ArrayList<RoleSign> otherteam = SignMarkerManager.getInstance().getOtherTeamRoleSign(mainplayer.getTeam());
             mainplayer.attack(otherteam);
         }
     }
@@ -126,6 +127,8 @@ public abstract class GameManager {
             for (RebirthPoint rebirthPoint : rebirthPoints) {
                 if (rebirthPoint.isRebirthable(mainplayer)) {
                     rebirthPoint.rebirth(mainplayer);
+                    GetScore.getRebirthScore(mainplayer);
+
                     return;
                 }
             }
@@ -232,7 +235,7 @@ public abstract class GameManager {
                 }
             }
             /*移动完尝试攻击*/
-            ((RoleSign) sign).attack(SignMarkerManager.getInstance().getOtherTeam(sign.getTeam()));
+            ((RoleSign) sign).attack(SignMarkerManager.getInstance().getOtherTeamRoleSign(sign.getTeam()));
 
         }
 

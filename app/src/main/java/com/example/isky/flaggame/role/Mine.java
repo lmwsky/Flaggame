@@ -9,12 +9,8 @@ import util.MapUtil;
  * 地雷 固定标记
  */
 public class Mine extends FixedSign {
-    private LatLng latLng;
-    private double dist_attract;
-    private double influence;
-    private int team;
-
     public static double DIST_INFLUENCE = 30d;//爆炸影响范围
+    private double influence;
     private Miner miner;
 
     public Mine(Miner miner, double latitude, double longtitude, double influence) {
@@ -22,6 +18,10 @@ public class Mine extends FixedSign {
         this.latLng = new LatLng(latitude, longtitude);
         this.influence = influence;
         this.team = miner.getTeam();
+    }
+
+    public Miner getMiner() {
+        return miner;
     }
 
     /**

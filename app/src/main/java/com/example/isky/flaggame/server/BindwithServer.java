@@ -10,6 +10,11 @@ import com.amap.api.services.cloud.CloudResult;
 import com.amap.api.services.cloud.CloudSearch;
 import com.amap.api.services.core.AMapException;
 import com.amap.api.services.core.LatLonPoint;
+import com.amap.api.services.route.BusRouteResult;
+import com.amap.api.services.route.DriveRouteResult;
+import com.amap.api.services.route.RouteSearch;
+import com.amap.api.services.route.WalkPath;
+import com.amap.api.services.route.WalkRouteResult;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.SignMarkerManager;
 import com.google.gson.Gson;
@@ -57,6 +62,45 @@ public class BindwithServer {
         if (bindwithServer == null)
             bindwithServer = new BindwithServer();
         return bindwithServer;
+    }
+
+    public void queryWalkPath(LatLng s, LatLng e, final OndatasearchListener ondatasearchListener) {
+
+        LatLonPoint startPoint = new LatLonPoint(s.latitude, s.longitude);
+        LatLonPoint endPoint = new LatLonPoint(e.latitude, e.longitude);
+
+        RouteSearch.FromAndTo fromAndTo = new RouteSearch.FromAndTo(startPoint, endPoint);
+        RouteSearch routeSearch = new RouteSearch(GameApplication.getApplication());
+        routeSearch.setRouteSearchListener(new RouteSearch.OnRouteSearchListener() {
+
+            @Override
+            public void onBusRouteSearched(BusRouteResult busRouteResult, int statuscode) {
+            }
+
+            @Override
+            public void onDriveRouteSearched(DriveRouteResult driveRouteResult, int statuscode) {
+            }
+
+            @Override
+            public void onWalkRouteSearched(WalkRouteResult walkRouteResult, int statuscode) {
+                WalkPath walkPath = null;
+                if (statuscode == 0 && walkRouteResult != null && walkRouteResult.getPaths() != null
+                        && walkRouteResult.getPaths().size() > 0) {
+                    walkPath = walkRouteResult.getPaths().get(0);
+                    ondatasearchListener.success(walkPath);
+                } else {
+
+                    try {
+                        throw new Exception("can't not find path....");
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    ondatasearchListener.fail("unknow");
+                }
+            }
+        });
+        RouteSearch.WalkRouteQuery query = new RouteSearch.WalkRouteQuery(fromAndTo, RouteSearch.WalkDefault);
+        routeSearch.calculateWalkRouteAsyn(query);
     }
 
     public <T> void deleteData(final T object, final OnDeleteDataListener onDeleteDataListener) {
@@ -394,7 +438,7 @@ public class BindwithServer {
             };
             if (timer == null) {
                 timer = new Timer();
-                playerTimerHashMap.put(player,timer);
+                playerTimerHashMap.put(player, timer);
             } else {
                 timer.cancel();
             }

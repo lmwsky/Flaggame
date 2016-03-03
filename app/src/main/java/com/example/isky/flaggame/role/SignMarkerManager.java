@@ -58,9 +58,6 @@ public class SignMarkerManager {
         this.aMap = aMap;
     }
 
-    public ArrayList<Sign> getRoleSignByteam() {
-        return null;
-    }
 
     public RoleSign getMainPlayer() {
         return mainplayer;
@@ -78,7 +75,7 @@ public class SignMarkerManager {
     }
 
     public ArrayList<Mine> getMines() {
-        return null;
+        return mineArrayList;
     }
 
     /**
@@ -258,7 +255,7 @@ public class SignMarkerManager {
      * @param team 被排除的队伍标记
      * @return 角色的结合
      */
-    public ArrayList<RoleSign> getOtherTeam(int team) {
+    public ArrayList<RoleSign> getOtherTeamRoleSign(int team) {
         ArrayList<RoleSign> otherTeam = new ArrayList<>();
         for (RoleSign sign : allrolesignlist) {
             if (sign.getTeam() != team)
@@ -267,6 +264,15 @@ public class SignMarkerManager {
         return otherTeam;
     }
 
+    public ArrayList<RoleSign> getOwnTeamRoleSign(int team) {
+        ArrayList<RoleSign> ownTeam = new ArrayList<>();
+        for (RoleSign sign : allrolesignlist) {
+            if (sign.getTeam() == team) {
+                ownTeam.add(sign);
+            }
+        }
+        return ownTeam;
+    }
     /**
      * 返回mainplayer的队伍是否获胜了,只有全部其他方的旗帜占领才算胜利
      *

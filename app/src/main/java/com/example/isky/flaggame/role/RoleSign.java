@@ -24,6 +24,8 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
     protected double dist_investigate = 0.0;
     //攻击范围
     protected double dist_attract = 0.0;
+    //得分情况
+    protected int score = 0;
     //是否死亡
     protected boolean isDead = false;
     protected AI ai;
@@ -276,6 +278,14 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
 
     public void setAi(AI ai) {
         this.ai = ai;
+    }
+
+    public int getScore() {
+        return score;
+    }
+
+    public void setScore(int score) {
+        this.score = score;
     }
 
     public boolean isDead() {

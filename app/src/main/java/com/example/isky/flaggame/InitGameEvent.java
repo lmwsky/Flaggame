@@ -2,12 +2,12 @@ package com.example.isky.flaggame;
 
 import com.example.isky.flaggame.role.Flag;
 import com.example.isky.flaggame.role.RoleSign;
-import com.example.isky.flaggame.role.Sign;
 
 import java.util.ArrayList;
 
 /**
  * Created by isky on 2016/2/29.
+ *
  */
 public class InitGameEvent {
     private ArrayList<RoleSign> roleSigns;
@@ -16,7 +16,6 @@ public class InitGameEvent {
     public ArrayList<RoleSign> getRoleSigns() {
         return roleSigns;
     }
-
     public void setRoleSigns(ArrayList<RoleSign> roleSigns) {
         this.roleSigns = roleSigns;
     }

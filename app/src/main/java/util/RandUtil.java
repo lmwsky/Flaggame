@@ -123,4 +123,32 @@ public class RandUtil {
         latitudes = latitudes * DEGREE;
         return new LatLng(latitudes, longitude);
     }
+
+    /**
+     * 返回从某个开始点以一定速度移动到目标点的
+     *
+     * @param start
+     * @param goal
+     * @param speed
+     * @return 下个点的坐标
+     */
+    public static LatLng moveToGoal(LatLng start, LatLng goal, double speed) {
+        double startLat = start.latitude / DEGREE;
+        double startLog = start.longitude / DEGREE;
+
+        double goalLat = goal.latitude / DEGREE;
+        double goalLog = goal.longitude / DEGREE;
+
+        double deltaLat = goalLat - startLat;
+        double deltaLog = goalLog - startLog;
+
+        double distance = MapUtil.getDistance(start, goal);
+
+        double latitude, longitude;
+
+        latitude = (speed / distance * deltaLat + startLat) * DEGREE;
+        longitude = (speed / distance * deltaLog + startLog) * DEGREE;
+        return new LatLng(latitude, longitude);
+    }
+
 }
