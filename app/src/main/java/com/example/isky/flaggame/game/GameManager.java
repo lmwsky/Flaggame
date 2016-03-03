@@ -71,6 +71,7 @@ public abstract class GameManager {
      */
     public abstract void EndGame();
 
+  
     /**
      * 点击监听器，点击就让当前玩家攻击能够攻击的人
      */

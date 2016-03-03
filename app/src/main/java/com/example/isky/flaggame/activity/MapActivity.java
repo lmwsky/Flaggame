@@ -12,6 +12,7 @@ import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.MapView;
 import com.example.isky.flaggame.R;
 import com.example.isky.flaggame.game.GameManager;
+import com.example.isky.flaggame.game.MulPlayerGame;
 import com.example.isky.flaggame.game.SinglePlayerGame;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
@@ -23,6 +24,8 @@ public class MapActivity extends Activity {
     private MapView mapView;
     private AMap aMap;
     private GameManager gameManager;
+    private int gametype = 1;
+    private boolean isRoomOwner = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -35,10 +38,19 @@ public class MapActivity extends Activity {
         mapView = (MapView) findViewById(R.id.map);
         mapView.onCreate(savedInstanceState);// 必须要写
         aMap = mapView.getMap();
-        gameManager = new SinglePlayerGame(this, aMap);
         setViewAndListener(this);
-        //游戏进行初始化
-        gameManager.InitGame();
+
+        if (gametype == 0) {
+            gameManager = new SinglePlayerGame(this, aMap);
+            //游戏进行初始化
+            gameManager.InitGame();
+        } else {
+            gameManager = new MulPlayerGame(this, aMap);
+            if (isRoomOwner == true)
+                ((MulPlayerGame) gameManager).InitGameByOwner();
+            else
+                ((MulPlayerGame) gameManager).InitGameByOthers();
+        }
 
     }
 

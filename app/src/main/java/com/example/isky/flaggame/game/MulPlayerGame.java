@@ -142,4 +142,11 @@ public class MulPlayerGame extends GameManager {
         return GAMESTATE;
     }
 
+    public void InitGameByOwner() {
+
+    }
+
+    public void InitGameByOthers() {
+
+    }
 }
