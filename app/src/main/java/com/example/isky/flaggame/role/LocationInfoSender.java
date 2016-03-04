@@ -1,8 +1,6 @@
 package com.example.isky.flaggame.role;
 
 import com.amap.api.maps2d.model.LatLng;
-import com.example.isky.flaggame.server.BindwithServer;
-import com.example.isky.flaggame.server.Player;
 
 /**
  * Created by isky on 2016/2/17.

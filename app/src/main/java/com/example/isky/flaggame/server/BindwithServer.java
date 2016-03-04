@@ -37,8 +37,9 @@ import util.JsonUtil;
  * 实现了这个接口的类能够和云端的数据进行绑定
  */
 public class BindwithServer {
-    static final String TABLEID_ROOM = "56d111d4305a2a32886cd3a3";
-    static final String TABLEID_PLAYER = "56d3ba587bbf197f399b96f1";
+    public static final String TABLEID_ROOM = "56d111d4305a2a32886cd3a3";
+    public static final String TABLEID_PLAYER = "56d3ba587bbf197f399b96f1";
+    public static final String TABLEID_EVENT = "56d8f970305a2a3288be05a3";
     private static final long UPDATEPLAYERLOCATION_DELAY = 1100;
     private static BindwithServer bindwithServer;
     private HashMap<String, String> tablenamemap = new HashMap<>();//tablename 与 tableid的map
@@ -47,11 +48,11 @@ public class BindwithServer {
     private CloudSearch mCloudSearch;
     private OnCloudeSearchlistener onCloudeSearchlistener;
 
-    private HashMap<Player, Timer> playerTimerHashMap = new HashMap<>();//更新player位置的定时器
+    private HashMap<PlayerManager.Player, Timer> playerTimerHashMap = new HashMap<>();//更新player位置的定时器
 
     private BindwithServer() {
-        addtableid(Room.class.getName(), BindwithServer.TABLEID_ROOM);
-        addtableid(Player.class.getName(), BindwithServer.TABLEID_PLAYER);
+        addtableid(RoomManage.Room.class.getName(), BindwithServer.TABLEID_ROOM);
+        addtableid(PlayerManager.Player.class.getName(), BindwithServer.TABLEID_PLAYER);
         mCloudSearch = new CloudSearch(GameApplication.getApplication());
 
         onCloudeSearchlistener = new OnCloudeSearchlistener();
@@ -386,7 +387,7 @@ public class BindwithServer {
         updateData(tableid, _id, "gson", gsonstr, onUpdateDataListener);
     }
 
-    public void sendPlayerLocation(Player player) {
+    public void sendPlayerLocation(PlayerManager.Player player) {
         updateData(TABLEID_PLAYER, player.get_id(), "_location", JsonUtil.get_locationstr(player.getLatLng()), null);
     }
 
@@ -395,7 +396,7 @@ public class BindwithServer {
      *
      * @param player
      */
-    public void startReceivePlayerLocation(final Player player) {
+    public void startReceivePlayerLocation(final PlayerManager.Player player) {
         final String _id = player.get_id();
         if (_id == null) {
             try {
@@ -416,7 +417,7 @@ public class BindwithServer {
 
                         @Override
                         public void success(Object object) {
-                            LatLng latlng = ((Player) object).getLatLng();
+                            LatLng latlng = ((PlayerManager.Player) object).getLatLng();
                             player.setLatLng(latlng);
                             RoleSign rolesign = SignMarkerManager.getInstance().getBindingRolesignByPlayer(player);
                             if (rolesign == null)
@@ -447,7 +448,7 @@ public class BindwithServer {
         }
     }
 
-    public void stopReceivePlayerLocation(final Player player) {
+    public void stopReceivePlayerLocation(final PlayerManager.Player player) {
         Timer timer = playerTimerHashMap.get(player);
         if (timer == null) {
             try {

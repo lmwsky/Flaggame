@@ -14,7 +14,7 @@ import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.MyLocationStyle;
 import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.LocationServiceManager;
-import com.example.isky.flaggame.server.Player;
+import com.example.isky.flaggame.server.PlayerManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -28,7 +28,7 @@ import java.util.Map;
 public class SignMarkerManager {
 
     private static SignMarkerManager signMarkerManager;
-    private Map<Player, RoleSign> playerRoleSignHashMap = new HashMap<>();
+    private Map<PlayerManager.Player, RoleSign> playerRoleSignHashMap = new HashMap<>();
     private AMap aMap;
     private ArrayList<Sign> allsignlist = new ArrayList<>();
     private ArrayList<RoleSign> allrolesignlist = new ArrayList<>();
@@ -424,7 +424,7 @@ public class SignMarkerManager {
      * @param roleSign
      * @param player
      */
-    public void bindRoleSignWithLocationReciever(RoleSign roleSign, Player player) {
+    public void bindRoleSignWithLocationReciever(RoleSign roleSign, PlayerManager.Player player) {
         playerRoleSignHashMap.put(player, roleSign);
     }
 
@@ -432,7 +432,7 @@ public class SignMarkerManager {
      * 将主玩家角色的位置与player进行绑定，每当主玩家角色的位置改变，上传到服务器
      * @param player
      */
-    public void bindMainplayerAsLocationSender(final Player player) {
+    public void bindMainplayerAsLocationSender(final PlayerManager.Player player) {
         if (mainplayer == null) {
             try {
                 throw new Exception("Mainplayer is not exist");
@@ -453,7 +453,7 @@ public class SignMarkerManager {
         }
     }
 
-    public RoleSign getBindingRolesignByPlayer(Player player) {
+    public RoleSign getBindingRolesignByPlayer(PlayerManager.Player player) {
         return playerRoleSignHashMap.get(player);
     }
 }

@@ -20,7 +20,7 @@ import util.GameApplication;
 public class PlayerManager {
     private static PlayerManager playerManager;
     LocationSource.OnLocationChangedListener initlocationreceivelistener;
-    private Room currentroom;
+    private RoomManage.Room currentroom;
     private Player mainplayer;
 
     private PlayerManager() {
@@ -156,7 +156,7 @@ public class PlayerManager {
      */
     public
     @Nullable
-    Room getCurrentroom() {
+    RoomManage.Room getCurrentroom() {
         if (mainplayer == null || currentroom == null)
             return null;
         else
@@ -190,7 +190,7 @@ public class PlayerManager {
      * @param player
      * @param onPlayerManagelistener
      */
-    public void reverseRoomPlayerState(@NonNull final Room room, @NonNull final Player player, final OnPlayerManagelistener onPlayerManagelistener) {
+    public void reverseRoomPlayerState(@NonNull final RoomManage.Room room, @NonNull final Player player, final OnPlayerManagelistener onPlayerManagelistener) {
         final boolean finalIsInRoom = reverseRoomPlayerState(room, player);
         BindwithServer.getInstance().updateData(room, new BindwithServer.OnUpdateDataListener() {
             @Override
@@ -243,9 +243,9 @@ public class PlayerManager {
      * @param player
      * @return 改变之前player是否在room里面，true 在，false 不在
      */
-    private boolean reverseRoomPlayerState(@NonNull Room room, @NonNull Player player) {
+    private boolean reverseRoomPlayerState(@NonNull RoomManage.Room room, @NonNull Player player) {
         boolean isInRoom;
-        if (room.isExist(player.get_id()) == true) {
+        if (room.isExist(player.get_id())) {
             isInRoom = true;
             room.removePlayer(player.get_id());
             player.setRoomid(null);
@@ -262,7 +262,7 @@ public class PlayerManager {
      *
      * @param room 要加入的房间
      */
-    public void enterRoom(final Room room, final OnPlayerManagelistener onPlayerManagelistener) {
+    public void enterRoom(final RoomManage.Room room, @Nullable final OnPlayerManagelistener onPlayerManagelistener) {
         if (mainplayer == null || mainplayer.get_id() == null) {
             try {
                 throw new Exception("mainplayer is not exist");
@@ -271,18 +271,22 @@ public class PlayerManager {
             }
         } else {
             //房间满人
-            if (room.isfull() == true) {
-                onPlayerManagelistener.OnEnterRoomFail("room is full");
+            if (room.isfull()) {
+                if (onPlayerManagelistener != null) {
+                    onPlayerManagelistener.OnEnterRoomFail("room is full");
+                }
                 return;
             }
             String _id = mainplayer.get_id();
-            if (room.isExist(_id) == true) {
+            if (room.isExist(_id)) {
                 try {
                     throw new Exception("already in the room");
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                onPlayerManagelistener.OnEnterRoomFail("already in room");
+                if (onPlayerManagelistener != null) {
+                    onPlayerManagelistener.OnEnterRoomFail("already in room");
+                }
             } else {
                 reverseRoomPlayerState(room, mainplayer, onPlayerManagelistener);
             }
@@ -301,6 +305,46 @@ public class PlayerManager {
         void onLeaveRoomSuccess();
 
         void onLeaveRoomFail();
+
+    }
+
+    /**
+     * Created by isky on 2016/2/29.
+     * 玩家的信息类，玩家名，玩家当前位置
+     */
+    public static class Player implements _idQuery {
+        private LatLng latLng;
+        private String playername;
+        private String roomid;
+
+        public String get_id() {
+            return BindwithServer.getInstance().get_id(this);
+        }
+
+        public LatLng getLatLng() {
+            return latLng;
+        }
+
+        public void setLatLng(LatLng latLng) {
+            this.latLng = latLng;
+        }
+
+        public String getPlayername() {
+            return playername;
+        }
+
+        public void setPlayername(String playername) {
+            this.playername = playername;
+        }
+
+        public String getRoomid() {
+            return roomid;
+        }
+
+        public void setRoomid(String roomid) {
+            this.roomid = roomid;
+        }
+
 
     }
 }
