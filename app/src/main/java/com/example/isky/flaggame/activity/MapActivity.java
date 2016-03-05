@@ -11,8 +11,9 @@ import android.widget.ImageView;
 import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.MapView;
 import com.example.isky.flaggame.R;
+import com.example.isky.flaggame.game.GameConfig;
 import com.example.isky.flaggame.game.GameManager;
-import com.example.isky.flaggame.game.MulPlayerGame;
+import com.example.isky.flaggame.game.MultiPlayerGame;
 import com.example.isky.flaggame.game.SinglePlayerGame;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
@@ -24,8 +25,6 @@ public class MapActivity extends Activity {
     private MapView mapView;
     private AMap aMap;
     private GameManager gameManager;
-    private int gametype = 1;
-    private boolean isRoomOwner = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,17 +39,13 @@ public class MapActivity extends Activity {
         aMap = mapView.getMap();
         setViewAndListener(this);
 
-        if (gametype == 0) {
+        if (GameConfig.gametype == GameConfig.GAMETYPE_SinglePlayerGame)
             gameManager = new SinglePlayerGame(this, aMap);
-            //游戏进行初始化
-            gameManager.InitGame();
-        } else {
-            gameManager = new MulPlayerGame(this, aMap);
-            if (isRoomOwner == true)
-                ((MulPlayerGame) gameManager).InitGameByOwner();
-            else
-                ((MulPlayerGame) gameManager).InitGameByOthers();
-        }
+        else
+            gameManager = new MultiPlayerGame(this, aMap);
+
+        //游戏进行初始化
+        gameManager.InitGame();
 
     }
 
@@ -106,36 +101,36 @@ public class MapActivity extends Activity {
                 .build();
 
         SubActionButton.Builder itemBuilder = new SubActionButton.Builder(this);
-// repeat many times:
-        ImageView itemIcon1 = new ImageView(this);
-        Drawable drawable1 = resources.getDrawable(R.drawable.button_sub_action);
-        itemIcon1.setImageDrawable(drawable1);
-        SubActionButton button1 = itemBuilder.setContentView(itemIcon1).build();
-        button1.setOnClickListener(new SinglePlayerGame.OnSkillBtClickListener());
+        // repeat many times:
+        ImageView icon_attract = new ImageView(this);
+        Drawable drawable_attract = resources.getDrawable(R.drawable.button_sub_action);
+        icon_attract.setImageDrawable(drawable_attract);
+        SubActionButton bt_attract = itemBuilder.setContentView(icon_attract).build();
+        bt_attract.setOnClickListener(new SinglePlayerGame.OnAttractBtClickListener());
 
-        ImageView itemIcon2 = new ImageView(this);
-        Drawable drawable2 = resources.getDrawable(R.drawable.button_sub_action);
-        itemIcon2.setImageDrawable(drawable1);
-        SubActionButton button2 = itemBuilder.setContentView(itemIcon2).build();
-        button2.setOnClickListener(new SinglePlayerGame.OnAttractBtClickListener());
+        ImageView icon_skill = new ImageView(this);
+        Drawable drawable_skill = resources.getDrawable(R.drawable.button_sub_action);
+        icon_skill.setImageDrawable(drawable_skill);
+        SubActionButton bt_skill = itemBuilder.setContentView(icon_skill).build();
+        bt_skill.setOnClickListener(new SinglePlayerGame.OnSkillBtClickListener());
 
-        ImageView itemIcon3 = new ImageView(this);
-        Drawable drawable3 = resources.getDrawable(R.drawable.button_sub_action);
-        itemIcon3.setImageDrawable(drawable1);
-        SubActionButton button3 = itemBuilder.setContentView(itemIcon3).build();
-        button3.setOnClickListener(new SinglePlayerGame.OnOccupyBtClickListener());
+        ImageView icon_occupy = new ImageView(this);
+        Drawable drawable_occupy = resources.getDrawable(R.drawable.button_sub_action);
+        icon_occupy.setImageDrawable(drawable_occupy);
+        SubActionButton bt_occupy = itemBuilder.setContentView(icon_occupy).build();
+        bt_occupy.setOnClickListener(new SinglePlayerGame.OnOccupyBtClickListener());
 
-        ImageView itemIcon4 = new ImageView(this);
-        Drawable drawable4 = resources.getDrawable(R.drawable.button_sub_action);
-        itemIcon4.setImageDrawable(drawable4);
-        SubActionButton button4 = itemBuilder.setContentView(itemIcon4).build();
-        button4.setOnClickListener(new SinglePlayerGame.OnRebirthBtClickListener());
+        ImageView icon_rebirth = new ImageView(this);
+        Drawable drawable_rebirth = resources.getDrawable(R.drawable.button_sub_action);
+        icon_rebirth.setImageDrawable(drawable_rebirth);
+        SubActionButton bt_rebirth = itemBuilder.setContentView(icon_rebirth).build();
+        bt_rebirth.setOnClickListener(new SinglePlayerGame.OnRebirthBtClickListener());
 
-        ImageView itemIcon5 = new ImageView(this);
-        Drawable drawable5 = resources.getDrawable(R.drawable.button_sub_action);
-        itemIcon5.setImageDrawable(drawable1);
-        SubActionButton button5 = itemBuilder.setContentView(itemIcon5).build();
-        button5.setOnClickListener(new View.OnClickListener() {
+        ImageView icon_endgame = new ImageView(this);
+        Drawable drawable_endgame = resources.getDrawable(R.drawable.button_sub_action);
+        icon_endgame.setImageDrawable(drawable_endgame);
+        SubActionButton bt_endgame = itemBuilder.setContentView(icon_endgame).build();
+        bt_endgame.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 gameManager.EndGame();
@@ -143,11 +138,11 @@ public class MapActivity extends Activity {
         });
 
         FloatingActionMenu actionMenu = new FloatingActionMenu.Builder(this)
-                .addSubActionView(button1)
-                .addSubActionView(button2)
-                .addSubActionView(button3)
-                .addSubActionView(button4)
-                .addSubActionView(button5)
+                .addSubActionView(bt_attract)
+                .addSubActionView(bt_skill)
+                .addSubActionView(bt_occupy)
+                .addSubActionView(bt_rebirth)
+                .addSubActionView(bt_endgame)
                         // ...
                 .attachTo(actionButton)
                 .build();
