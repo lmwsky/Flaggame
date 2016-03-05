@@ -24,14 +24,18 @@ public class GameConfig {
     public static final int GAMETYPE_SinglePlayerGame = 0;
     public static final int GAMETYPE_MULTIPLAYER = 1;
 
+    public final static int SINGLEGAME_MAINPLAYERTEAM = 1;
+    public final static int SINGLEGAME_MONSTERTEAM = 0;
+
 
     /*小写表示的是游戏初始化的各种可变参数*/
     public static double dist_flag = DIST_FLAG_CLOSED;
-    public static double num_monsters = NUM_MONSTER_MIDDLE;
+    public static int num_monsters = NUM_MONSTER_MIDDLE;
     public static int gametype = GAMETYPE_MULTIPLAYER;
 
     public static BitmapDescriptor mainplayerBitmapDie = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE);
     public static BitmapDescriptor mainplayerBitmapLive = BitmapDescriptorFactory.fromResource(R.drawable.location_marker);
     public static BitmapDescriptor otherplayerDying = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE);
 
+    public static double dist_monster = DIST_MONSTER_NOMAL;
 }
