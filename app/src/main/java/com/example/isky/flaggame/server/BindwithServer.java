@@ -15,8 +15,10 @@ import com.amap.api.services.route.DriveRouteResult;
 import com.amap.api.services.route.RouteSearch;
 import com.amap.api.services.route.WalkPath;
 import com.amap.api.services.route.WalkRouteResult;
+import com.example.isky.flaggame.game.GameEventFactory;
+import com.example.isky.flaggame.game.GameHandler;
 import com.example.isky.flaggame.role.RoleSign;
-import com.example.isky.flaggame.role.SignMarkerManager;
+import com.example.isky.flaggame.role.SignManager;
 import com.google.gson.Gson;
 import com.loopj.android.http.JsonHttpResponseHandler;
 
@@ -41,18 +43,23 @@ public class BindwithServer {
     public static final String TABLEID_PLAYER = "56d3ba587bbf197f399b96f1";
     public static final String TABLEID_EVENT = "56d8f970305a2a3288be05a3";
     private static final long UPDATEPLAYERLOCATION_DELAY = 1100;
+    private static final long DELAY_QUERY = 1000;//每1s查询一次事件
     private static BindwithServer bindwithServer;
-    private HashMap<String, String> tablenamemap = new HashMap<>();//tablename 与 tableid的map
-    private HashMap<Object, String> tableidmap = new HashMap<>();//object 与tableid的map
-    private HashMap<Object, String> _idmap = new HashMap<>();//object 与 id(在 table中)的map
+    public String minid = "0";
+    private HashMap<String, String> tablenametableidmap = new HashMap<>();//tablename 与 tableid的map
+    private HashMap<Object, String> objecttableidmap = new HashMap<>();//object 与tableid的map
+    private HashMap<Object, String> object_idmap = new HashMap<>();//object 与 id(在 table中)的map
     private CloudSearch mCloudSearch;
     private OnCloudeSearchlistener onCloudeSearchlistener;
-
     private HashMap<PlayerManager.Player, Timer> playerTimerHashMap = new HashMap<>();//更新player位置的定时器
+    private Timer eventQueryTimer;
+    private QueryTask queryTask;
 
     private BindwithServer() {
-        addtableid(RoomManage.Room.class.getName(), BindwithServer.TABLEID_ROOM);
-        addtableid(PlayerManager.Player.class.getName(), BindwithServer.TABLEID_PLAYER);
+        bindTablenamewithTableid(RoomManage.Room.class.getName(), BindwithServer.TABLEID_ROOM);
+        bindTablenamewithTableid(PlayerManager.Player.class.getName(), BindwithServer.TABLEID_PLAYER);
+        bindTablenamewithTableid(GameEventFactory.GameEvent.class.getName(), BindwithServer.TABLEID_PLAYER);
+
         mCloudSearch = new CloudSearch(GameApplication.getApplication());
 
         onCloudeSearchlistener = new OnCloudeSearchlistener();
@@ -63,6 +70,11 @@ public class BindwithServer {
         if (bindwithServer == null)
             bindwithServer = new BindwithServer();
         return bindwithServer;
+    }
+
+    public void setQueryGameEventMin_id(int min_id) {
+        if (queryTask != null)
+            queryTask.setMin_id(min_id);
     }
 
     public void queryWalkPath(LatLng s, LatLng e, final OndatasearchListener ondatasearchListener) {
@@ -105,8 +117,11 @@ public class BindwithServer {
     }
 
     public <T> void deleteData(final T object, final OnDeleteDataListener onDeleteDataListener) {
-        String tableid = tableidmap.get(object);
-        String _id = _idmap.get(object);
+        String tableid = objecttableidmap.get(object);
+        String _id = object_idmap.get(object);
+
+        if (tableid == null)
+            tableid = tablenametableidmap.get(object.getClass().getName());
         if (tableid == null || _id == null) {
             try {
                 throw new Exception("tableid or _id is not exist");
@@ -124,8 +139,8 @@ public class BindwithServer {
                         if (response.getInt("status") != 1)
                             onDeleteDataListener.fail(response.getString("info"));
                         else {
-                            tableidmap.remove(object);
-                            _idmap.remove(object);
+                            objecttableidmap.remove(object);
+                            object_idmap.remove(object);
                             onDeleteDataListener.success("");
                         }
                     } catch (JSONException e) {
@@ -151,20 +166,25 @@ public class BindwithServer {
      * @param onCreateDataListener
      * @param <T>                  支持object为任意泛型，但是要求需要上传的属性拥有get方法
      */
-    public <T> void createData(final T object, final OnCreateDataListener onCreateDataListener) {
-        String tableid = tableidmap.get(object);
+    public <T> void createData(final T object, @Nullable final OnCreateDataListener onCreateDataListener) {
+        String tableid = objecttableidmap.get(object);
+        if (tableid == null)
+            tableid = tablenametableidmap.get(object.getClass().getName());
+
         //若object尚未绑定表，则自动以object.getClass().getSimpleName()为表名创建表,若创建表成功再添加data在这个表中
         if (tableid == null) {
             createTable(object.getClass().getSimpleName(), new OnCreateTableListener() {
                 @Override
                 public void success(String tableid) {
-                    tableidmap.put(object, tableid);//绑定对象
+                    objecttableidmap.put(object, tableid);//绑定对象
                     createData(object, onCreateDataListener);
                 }
 
                 @Override
                 public void fail(String info) {
-                    onCreateDataListener.fail(info);
+                    if (onCreateDataListener != null) {
+                        onCreateDataListener.fail(info);
+                    }
                 }
             });
         }//若object已经绑定表
@@ -182,17 +202,22 @@ public class BindwithServer {
                 public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                     try {
                         if (response.getInt("status") != 1)
-                            onCreateDataListener.fail(response.getString("info"));
-                        else {
+                            if (onCreateDataListener != null) {
+                                onCreateDataListener.fail(response.getString("info"));
+                            } else {
 
-                            String _id = response.getString("_id");
-                            _idmap.put(object, _id);
+                                String _id = response.getString("_id");
+                                object_idmap.put(object, _id);
 
-                            onCreateDataListener.success(_id);
-                        }
+                                if (onCreateDataListener != null) {
+                                    onCreateDataListener.success(_id);
+                                }
+                            }
                     } catch (JSONException e) {
                         e.printStackTrace();
-                        onCreateDataListener.fail("JSONNOTCONTENT STATUS_id");
+                        if (onCreateDataListener != null) {
+                            onCreateDataListener.fail("JSONNOTCONTENT STATUS_id");
+                        }
                     }
 
                 }
@@ -200,7 +225,9 @@ public class BindwithServer {
                 @Override
                 public void onFailure(int statusCode, Header[] headers, String responseString, Throwable throwable) {
                     super.onFailure(statusCode, headers, responseString, throwable);
-                    onCreateDataListener.fail(responseString);
+                    if (onCreateDataListener != null) {
+                        onCreateDataListener.fail(responseString);
+                    }
                 }
             });
 
@@ -214,7 +241,7 @@ public class BindwithServer {
      * @param onCreateTableListener 创建的回调接口，成功或者失败
      */
     public void createTable(final String name, final OnCreateTableListener onCreateTableListener) {
-        String tableid = tablenamemap.get(name);
+        String tableid = tablenametableidmap.get(name);
         if (tableid != null) {
             onCreateTableListener.success(tableid);
         } else {
@@ -227,7 +254,7 @@ public class BindwithServer {
                         else {
                             /*自动将创建的表名与tableid映射保存到Map*/
                             String tableid = response.getString("tableid");
-                            tablenamemap.put(name, tableid);
+                            tablenametableidmap.put(name, tableid);
 
                             onCreateTableListener.success(tableid);
                         }
@@ -252,17 +279,17 @@ public class BindwithServer {
     }
 
     public <T> boolean bindTablebyName(T object, String name) {
-        String tableid = tablenamemap.get(name);
+        String tableid = tablenametableidmap.get(name);
         if (tableid == null) {
             Log.d("hh", "表不存在");
             return false;
         }
-        if (tableidmap.containsKey(object)) {
+        if (objecttableidmap.containsKey(object)) {
             Log.d("hh", "");
             return false;
         }
 
-        tableidmap.put(object, tableid);
+        objecttableidmap.put(object, tableid);
         return true;
     }
 
@@ -276,6 +303,28 @@ public class BindwithServer {
         onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
         mCloudSearch.searchCloudDetailAsyn(tableid, _id);
     }
+
+
+    public void getData(String tableid, String key, String keyValue, final OndatasearchListener ondatasearchListener) {
+        onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
+
+        CloudSearch.Query mQuery = null;
+        CloudSearch.SearchBound bound = new CloudSearch.SearchBound("全国");
+        try {
+            mQuery = new CloudSearch.Query(tableid, "", bound);
+            mQuery.addFilterString(key, keyValue);
+            mQuery.setPageSize(10);
+            CloudSearch.Sortingrules sorting = new CloudSearch.Sortingrules(
+                    "_id", false);
+            mQuery.setSortingrules(sorting);
+            mCloudSearch.searchCloudAsyn(mQuery);// 异步搜索
+        } catch (AMapException e) {
+            e.printStackTrace();
+        }
+
+
+    }
+
 
     /**
      * @param tableid
@@ -303,14 +352,20 @@ public class BindwithServer {
 
     }
 
-    public void getData(String tableid, String key, String keyValue, final OndatasearchListener ondatasearchListener) {
+    public void getDatabyid(String tableid, int minid, int maxid, final OndatasearchListener ondatasearchListener) {
+        getDatabyid(tableid, minid, maxid, null, null, ondatasearchListener);
+    }
+
+    public void getDatabyid(String tableid, int minid, int maxid, @Nullable String key, @Nullable String keyvalue, final OndatasearchListener ondatasearchListener) {
         onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
 
         CloudSearch.Query mQuery = null;
         CloudSearch.SearchBound bound = new CloudSearch.SearchBound("全国");
         try {
             mQuery = new CloudSearch.Query(tableid, "", bound);
-            mQuery.addFilterString(key, keyValue);
+            mQuery.addFilterNum("_id", minid + "", maxid + "");
+            if (key != null && keyvalue != null)
+                mQuery.addFilterString(key, keyvalue);
             mQuery.setPageSize(10);
             CloudSearch.Sortingrules sorting = new CloudSearch.Sortingrules(
                     "_id", false);
@@ -320,11 +375,16 @@ public class BindwithServer {
             e.printStackTrace();
         }
 
-
     }
 
-    public void addtableid(String name, String tableid) {
-        tablenamemap.put(name, tableid);
+    /**
+     * 将一个名字与表id绑定到一起
+     *
+     * @param name    表名
+     * @param tableid 表id
+     */
+    public void bindTablenamewithTableid(String name, String tableid) {
+        tablenametableidmap.put(name, tableid);
     }
 
     /**
@@ -334,7 +394,7 @@ public class BindwithServer {
      * @return
      */
     public String get_id(Object o) {
-        return _idmap.get(o);
+        return object_idmap.get(o);
     }
 
     public void updateData(String tableid, final String _id, String updatekey, String updatevalue, @Nullable final OnUpdateDataListener onUpdateDataListener) {
@@ -380,8 +440,8 @@ public class BindwithServer {
     }
 
     public <T> void updateData(T updateObject, @Nullable final OnUpdateDataListener onUpdateDataListener) {
-        String tableid = tableidmap.get(updateObject);
-        String _id = _idmap.get(updateObject);
+        String tableid = objecttableidmap.get(updateObject);
+        String _id = object_idmap.get(updateObject);
         Gson gson = new Gson();
         String gsonstr = gson.toJson(updateObject);
         updateData(tableid, _id, "gson", gsonstr, onUpdateDataListener);
@@ -419,7 +479,7 @@ public class BindwithServer {
                         public void success(Object object) {
                             LatLng latlng = ((PlayerManager.Player) object).getLatLng();
                             player.setLatLng(latlng);
-                            RoleSign rolesign = SignMarkerManager.getInstance().getBindingRolesignByPlayer(player);
+                            RoleSign rolesign = SignManager.getInstance().getBindingRolesignByPlayer(player);
                             if (rolesign == null)
                                 try {
                                     throw new Exception("unbind the player with rolesign");
@@ -461,6 +521,46 @@ public class BindwithServer {
     }
 
     /**
+     * 开始从服务器接收事件信息，并且将接收到的事件信息转发给GameHandle进行处理
+     */
+    public void startReceiveGameEvent() {
+        //接受事件
+        startReceiveGameEvent(0 + "", new BindwithServer.OnGameEventReceiveListener() {
+            @Override
+            public void OnReceiveEvent(ArrayList<Object> gameEventlsit) {
+                for (Object gameevent : gameEventlsit)
+                    GameHandler.doGameEventFromServer((GameEventFactory.GameEvent) gameevent);
+            }
+        });
+    }
+
+    /**
+     * 开始从服务器端接收游戏事件
+     *
+     * @param startid
+     */
+    private void startReceiveGameEvent(String startid, OnGameEventReceiveListener onGameEventReceiveListener) {
+        eventQueryTimer = new Timer();
+
+        queryTask = new QueryTask(onGameEventReceiveListener);
+        queryTask.setMin_id(Integer.parseInt(startid));
+        eventQueryTimer.schedule(queryTask, 0, DELAY_QUERY);
+    }
+
+    /**
+     * 停止从服务器接收游戏事件
+     */
+    public void stopReceiveGameEvent() {
+        eventQueryTimer.cancel();
+        eventQueryTimer = null;
+    }
+
+    public void stopReceivePlayerLocation() {
+        for (Timer timer : playerTimerHashMap.values())
+            timer.cancel();
+    }
+
+    /**
      * 在云端建立数据的回调接口
      */
     public interface OnCreateDataListener {
@@ -477,6 +577,7 @@ public class BindwithServer {
 
         void fail(String info);
     }
+
 
     /**
      * 在云端建立数据表的回调接口
@@ -497,11 +598,17 @@ public class BindwithServer {
         void fail(String info);
     }
 
-
     public interface OnDeleteDataListener {
         void success(String info);
 
         void fail(String info);
+    }
+
+    /**
+     * 游戏事件的监听器
+     */
+    public interface OnGameEventReceiveListener {
+        void OnReceiveEvent(ArrayList<Object> gameEventlsit);
     }
 
     private class OnCloudeSearchlistener implements CloudSearch.OnCloudSearchListener {
@@ -526,7 +633,7 @@ public class BindwithServer {
                         Gson gson = new Gson();
                         for (CloudItem clouditem : clouditems) {
                             Object item = gson.fromJson(clouditem.getCustomfield().get("gson"), clss);
-                            _idmap.put(item, clouditem.getID());//将id映射保存到_idmap
+                            object_idmap.put(item, clouditem.getID());//将id映射保存到_idmap
                             datas.add(item);
                             ondatasearchListener.success(datas);
                         }
@@ -549,7 +656,7 @@ public class BindwithServer {
                         clss = Class.forName(cloudItemDetail.getCustomfield().get("class"));
                         Gson gson = new Gson();
                         Object item = gson.fromJson(cloudItemDetail.getCustomfield().get("gson"), clss);
-                        _idmap.put(item, cloudItemDetail.getID());//将id映射保存到_idmap
+                        object_idmap.put(item, cloudItemDetail.getID());//将id映射保存到_idmap
 
                         ondatasearchListener.success(item);
                     } catch (ClassNotFoundException e) {
@@ -560,6 +667,59 @@ public class BindwithServer {
             } else {
                 if (ondatasearchListener != null)
                     ondatasearchListener.fail(errorCode + "");
+            }
+        }
+    }
+
+    public class QueryTask extends TimerTask {
+        private final OnGameEventReceiveListener onGameEventReceiveListener;
+        private int min_id = 0;
+        private String roomid;
+
+        public QueryTask(OnGameEventReceiveListener onGameEventReceiveListener) {
+            this.onGameEventReceiveListener = onGameEventReceiveListener;
+            RoomManage.Room room = PlayerManager.getInstance().getCurrentroom();
+            if (room != null)
+                roomid = room.get_id();
+        }
+
+        public int getMin_id() {
+            return min_id;
+        }
+
+        public void setMin_id(int min_id) {
+            if (min_id > this.min_id)
+                this.min_id = min_id;
+        }
+
+        @Override
+        public void run() {
+            if (roomid != null) {
+                BindwithServer.getInstance().getDatabyid(TABLEID_EVENT, min_id, Integer.MAX_VALUE, "roomid", roomid, new OndatasearchListener() {
+                    @Override
+                    public void success(ArrayList<Object> datas) {
+                        int size = datas.size();
+                        if (size > 0) {
+                            //让下一次查询不会查询已经查询过的事件
+                            Object lastobject = datas.get(size - 1);
+                            String max_id = get_id(lastobject);
+                            int team = Integer.parseInt(max_id);
+                            min_id = team + 1;
+                            if (lastobject instanceof GameEventFactory.GameEvent)
+                                onGameEventReceiveListener.OnReceiveEvent(datas);
+                        }
+                    }
+
+                    @Override
+                    public void success(Object object) {
+
+                    }
+
+                    @Override
+                    public void fail(String info) {
+
+                    }
+                });
             }
         }
     }

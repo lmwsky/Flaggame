@@ -112,6 +112,7 @@ public class SinglePlayerGame extends GameManager {
      */
     private void initMonster(WalkPath walkPath, LatLng centerpoint) {
         List<WalkStep> walkPathList = walkPath.getSteps();
+        SignManager.getInstance().setWalkPathList(walkPathList);
         //生成怪物
         ArrayList<Monster> monsterlist = SignFactory.produceMonster(GameConfig.num_monsters, centerpoint, GameConfig.dist_monster);
         for (Monster monster : monsterlist) {
@@ -154,7 +155,7 @@ public class SinglePlayerGame extends GameManager {
         ToastUtil.show(activity, "endGame");
         /*摧毁定位服务的实例已经所有监听*/
         LocationServiceManager.getInstance().destory();
-        SignManager.getInstance().initMap();//重新设置地图定位
+//       SignManager.getInstance().initMap();//重新设置地图定位
         for (RoleSign monster : SignManager.getInstance().getAllMonsters()) {
             monster.stopmoving();
         }

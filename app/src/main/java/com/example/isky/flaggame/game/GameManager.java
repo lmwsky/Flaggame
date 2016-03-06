@@ -234,7 +234,7 @@ public abstract class GameManager {
             //游戏结束后不会发生移动了
             if (SignManager.getInstance().getGAMESTATE() != STATE_END) {
                 //发送消息给UI线程处理,并且是不需要上传到服务器端的
-                GameHandler.doGameEventFromServer(GameEventFactory.produceEventMove(sign));
+                GameHandler.doGameEventInLocal(GameEventFactory.produceEventMove(sign));
 
                 //游戏在进行中才检查是否触发炸弹
                 if (SignManager.isGameStarting()) {

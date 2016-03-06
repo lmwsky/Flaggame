@@ -1,6 +1,7 @@
 package com.example.isky.flaggame.role;
 
 import com.amap.api.maps2d.model.LatLng;
+import com.example.isky.flaggame.game.GameConfig;
 
 import util.MapUtil;
 
@@ -9,19 +10,22 @@ import util.MapUtil;
  * 地雷 固定标记
  */
 public class Mine extends FixedSign {
-    public static double DIST_INFLUENCE = 30d;//爆炸影响范围
     private double influence;
-    private Miner miner;
+    private String minerSignature;
 
-    public Mine(Miner miner, double latitude, double longtitude, double influence) {
-        this.miner = miner;
-        this.latLng = new LatLng(latitude, longtitude);
-        this.influence = influence;
-        this.team = miner.getTeam();
+    public Mine() {
+        setInfluence(GameConfig.DIST_MINE_INFLUENCE);
+        setLatLng(new LatLng(0, 0));
+        setIcon(GameConfig.BITMAP_MINE);
+
     }
 
-    public Miner getMiner() {
-        return miner;
+    public String getMinerSignature() {
+        return minerSignature;
+    }
+
+    public void setMinerSignature(String minerSignature) {
+        this.minerSignature = minerSignature;
     }
 
     /**
@@ -31,6 +35,10 @@ public class Mine extends FixedSign {
      */
     public double getInfluence() {
         return influence;
+    }
+
+    public void setInfluence(double influence) {
+        this.influence = influence;
     }
 
     /**

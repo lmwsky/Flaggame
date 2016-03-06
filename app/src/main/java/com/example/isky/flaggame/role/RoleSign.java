@@ -1,9 +1,7 @@
 package com.example.isky.flaggame.role;
 
-import com.amap.api.maps2d.model.BitmapDescriptor;
-import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.amap.api.maps2d.model.LatLng;
-import com.example.isky.flaggame.R;
+import com.example.isky.flaggame.game.GameConfig;
 
 import java.util.ArrayList;
 import java.util.Timer;
@@ -15,11 +13,7 @@ import util.MapUtil;
  * Created by isky on 2016/2/6.
  * 游戏中的各个游戏角色，能够在地图上显示，有侦查范围攻击范围，能够移动，能够设置AI
  */
-public class RoleSign extends Sign implements LocationInfoReceiver {
-    public static BitmapDescriptor mainplayerBitmapLive = BitmapDescriptorFactory.fromResource(R.drawable.location_marker);
-    public static BitmapDescriptor mainplayerBitmapDie = BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE);
-    private static long MOVEDELAY = 100;//更新位置的间隔，单位毫秒,可以看做每多少ms一帧动画
-    private final Timer timer = new Timer();
+public abstract class RoleSign extends Sign implements LocationInfoReceiver {
     //侦查范围
     protected double dist_investigate = 0.0;
     //攻击范围
@@ -28,17 +22,12 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
     protected int score = 0;
     //是否死亡
     protected boolean isDead = false;
-    protected AI ai;
-    private TimerTask task;
+    transient protected AI ai;
+    transient private Timer timer;
+    transient private TimerTask task;
 
 
     public RoleSign() {
-        //默认队伍为0
-        team = 0;
-    }
-
-    public RoleSign(int team) {
-        this.team = team;
     }
 
     /**
@@ -46,36 +35,39 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
      * 其中对于RoleSign的坐标latlng的修改只能通过调用setLatlng()方法
      */
     public void startmove() {
-        if (isDead == true)
+        if (isDead)
             return;
-        //初始化任务
-        if (task == null) {
-            ai.startwork();
-            task = new TimerTask() {
-                @Override
-                public void run() {
-                    //如果由AI控制，则利用ai更新位置
-                    if (ai != null)
-                        setLatLng(ai.getNextLocation());
-                }
-            };
-            timer.schedule(task, 0, MOVEDELAY);
-        } else {
-            timer.cancel();
-            //开启移动的更新定时器
-            timer.schedule(task, 0, MOVEDELAY);
+        if (ai != null) {
+            //初始化任务
+            if (task == null) {
+                ai.startwork();
+                task = new TimerTask() {
+                    @Override
+                    public void run() {
+                        //如果由AI控制，则利用ai更新位置
+                        if (ai != null)
+                            setLatLng(ai.getNextLocation());
+                    }
+                };
+                timer = new Timer();
+                timer.schedule(task, 0, GameConfig.AIMOVEDELAY);
+            } else {
+                timer.cancel();
+                //开启移动的更新定时器
+                timer.schedule(task, 0, GameConfig.AIMOVEDELAY);
+            }
         }
-
     }
 
     /**
      * 暂停移动
      */
     public void stopmoving() {
-
-        //暂停定时器
-        timer.cancel();
-        ai.stopwork();
+        if (timer != null)
+            //暂停定时器
+            timer.cancel();
+        if (ai != null)
+            ai.stopwork();
 
     }
 
@@ -84,7 +76,7 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
      * 让当前角色死亡,并且触发死亡监听器,只有条件符合才会执行
      */
     public void die() {
-        if (isDead == false) {
+        if (!isDead) {
             isDead = true;
             notifyOnRoleSignDieListeners();
         }
@@ -94,20 +86,16 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
      * 当前角色重生，并且触发重生监听器，只有条件符合才会执行
      */
     public void rebirth() {
-        if (isDead == true) {
+        if (isDead) {
             isDead = false;
             notifyOnRoleSignRebirthListeners();
         }
     }
 
     /**
-     * 角色的技能
+     * RoleSign的技能，由子类负责实现
      */
-    public void skill(ArrayList<Sign> signList) {
-    }
-
-    public void skill() {
-    }
+    public abstract void skill();
 
     /**
      * 尝试对对象进行, 攻击成功条件：双方都未死亡且被攻击方在攻击方的攻击范围内,且队伍不同
@@ -135,7 +123,6 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
         }
     }
 
-
     /**
      * 从侦查列表中选择能够被侦查的进行返回
      *
@@ -147,8 +134,6 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
         for (Sign sign : signArrayList)
             if (isInvestigate(sign))
                 resultlist.add(sign);
-
-
         return resultlist;
     }
 
@@ -167,8 +152,18 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
      * @param flag 被占领的旗帜
      */
     public void occupy(Flag flag) {
-        if (flag.getTeam() != getTeam() && isDead == false && isInAttractCircle(flag))
+        if (isCanOccupy(flag))
             flag.beOccupied(this);
+    }
+
+    /**
+     * 是否能够占领flag
+     *
+     * @param flag
+     * @return
+     */
+    public boolean isCanOccupy(Flag flag) {
+        return flag.getTeam() != getTeam() && !isDead && isInAttractCircle(flag);
     }
 
     /**
@@ -180,7 +175,6 @@ public class RoleSign extends Sign implements LocationInfoReceiver {
     public boolean isAttrackable(Sign sign) {
         if (sign instanceof RoleSign && sign.getTeam() != getTeam() && ((RoleSign) sign).isDead() == false) {
             return isInAttractCircle(sign);
-
         }
         return false;
     }

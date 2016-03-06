@@ -19,9 +19,6 @@ public class AsyncClient {
     public static void get(String url, RequestParamsFactory params, AsyncHttpResponseHandler responseHandler) {
         client.get(getAbsoluteUrl(url), params.requestParams, responseHandler);
     }
-    public static void fullget(String url, RequestParamsFactory params, AsyncHttpResponseHandler responseHandler) {
-        client.get(url, params.requestParams, responseHandler);
-    }
     public static void post(String url, RequestParams params, AsyncHttpResponseHandler responseHandler) {
         client.post(getAbsoluteUrl(url), params, responseHandler);
     }

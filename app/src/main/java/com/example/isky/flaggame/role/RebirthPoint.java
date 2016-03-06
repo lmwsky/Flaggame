@@ -1,10 +1,15 @@
 package com.example.isky.flaggame.role;
 
+import com.example.isky.flaggame.game.GameConfig;
+
 /**
  * Created by isky on 2016/2/10.
  * 复活点标记，可以让某个rolesign复活
  */
 public class RebirthPoint extends FixedSign {
+    public RebirthPoint() {
+        setIcon(GameConfig.BITMAP_REBIRTHPOINT);
+    }
     public void rebirth(RoleSign roleSign) {
         if (isRebirthable(roleSign)){
             roleSign.rebirth();

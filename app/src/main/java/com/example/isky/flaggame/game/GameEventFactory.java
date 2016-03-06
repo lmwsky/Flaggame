@@ -1,5 +1,7 @@
 package com.example.isky.flaggame.game;
 
+import android.support.annotation.Nullable;
+
 import com.example.isky.flaggame.role.FixedSign;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.Sign;
@@ -92,7 +94,7 @@ public class GameEventFactory {
             rolesignplayerid = player.get_id();
 
         GameEvent gameEvent = new GameEvent();
-        gameEvent.setEventtype(GameHandler.MSG_ADDMAINPLAYERROLESIGN);
+        gameEvent.setEventtype(GameHandler.MSG_ADDMAINPLAYERROLESIGN_SINGLE);
         gameEvent.setGson(gson.toJson(roleSign));
         gameEvent.setGsonclassname(roleSign.getClass().getName());
         //将rolesign对应的playerid设置为Toplayerid
@@ -174,7 +176,9 @@ public class GameEventFactory {
             this.eventtype = eventtype;
         }
 
-        public String getGson() {
+        public
+        @Nullable
+        String getGson() {
             return gson;
         }
 
@@ -182,7 +186,9 @@ public class GameEventFactory {
             this.gson = gson;
         }
 
-        public String getGsonclassname() {
+        public
+        @Nullable
+        String getGsonclassname() {
             return gsonclassname;
         }
 

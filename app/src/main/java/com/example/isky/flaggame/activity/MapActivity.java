@@ -15,6 +15,7 @@ import com.example.isky.flaggame.game.GameConfig;
 import com.example.isky.flaggame.game.GameManager;
 import com.example.isky.flaggame.game.MultiPlayerGame;
 import com.example.isky.flaggame.game.SinglePlayerGame;
+import com.example.isky.flaggame.role.SignManager;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
@@ -39,10 +40,11 @@ public class MapActivity extends Activity {
         aMap = mapView.getMap();
         setViewAndListener(this);
 
-        if (GameConfig.gametype == GameConfig.GAMETYPE_SinglePlayerGame)
+        if (GameConfig.gametype == GameConfig.GAMETYPE_SINGLEGAME)
             gameManager = new SinglePlayerGame(this, aMap);
         else
             gameManager = new MultiPlayerGame(this, aMap);
+        SignManager.getInstance().setGameManage(gameManager);
 
         //游戏进行初始化
         gameManager.InitGame();
@@ -106,25 +108,25 @@ public class MapActivity extends Activity {
         Drawable drawable_attract = resources.getDrawable(R.drawable.button_sub_action);
         icon_attract.setImageDrawable(drawable_attract);
         SubActionButton bt_attract = itemBuilder.setContentView(icon_attract).build();
-        bt_attract.setOnClickListener(new SinglePlayerGame.OnAttractBtClickListener());
+        bt_attract.setOnClickListener(new GameManager.OnAttractBtClickListener());
 
         ImageView icon_skill = new ImageView(this);
         Drawable drawable_skill = resources.getDrawable(R.drawable.button_sub_action);
         icon_skill.setImageDrawable(drawable_skill);
         SubActionButton bt_skill = itemBuilder.setContentView(icon_skill).build();
-        bt_skill.setOnClickListener(new SinglePlayerGame.OnSkillBtClickListener());
+        bt_skill.setOnClickListener(new GameManager.OnSkillBtClickListener());
 
         ImageView icon_occupy = new ImageView(this);
         Drawable drawable_occupy = resources.getDrawable(R.drawable.button_sub_action);
         icon_occupy.setImageDrawable(drawable_occupy);
         SubActionButton bt_occupy = itemBuilder.setContentView(icon_occupy).build();
-        bt_occupy.setOnClickListener(new SinglePlayerGame.OnOccupyBtClickListener());
+        bt_occupy.setOnClickListener(new GameManager.OnOccupyBtClickListener());
 
         ImageView icon_rebirth = new ImageView(this);
         Drawable drawable_rebirth = resources.getDrawable(R.drawable.button_sub_action);
         icon_rebirth.setImageDrawable(drawable_rebirth);
         SubActionButton bt_rebirth = itemBuilder.setContentView(icon_rebirth).build();
-        bt_rebirth.setOnClickListener(new SinglePlayerGame.OnRebirthBtClickListener());
+        bt_rebirth.setOnClickListener(new GameManager.OnRebirthBtClickListener());
 
         ImageView icon_endgame = new ImageView(this);
         Drawable drawable_endgame = resources.getDrawable(R.drawable.button_sub_action);

@@ -14,12 +14,6 @@ public interface AI {
     LatLng getNextLocation();
 
     /**
-     * 获得移动速度km/s，不同AI有不同的移动速度
-     * @return
-     */
-    double getRace();
-
-    /**
      * 准备开始工作
      */
     void startwork();

@@ -88,20 +88,6 @@ public class RoomManage {
         });
     }
 
-    /**
-     * 获取某个房间里的所有玩家的对象
-     *
-     * @param room                 房间对象
-     * @param ondatasearchListener
-     */
-    public void getPlayersByRoom(Room room, BindwithServer.OndatasearchListener ondatasearchListener) {
-        String roomid = BindwithServer.getInstance().get_id(room);
-        if (roomid == null)
-            ondatasearchListener.fail("room is not exist");
-        else
-            BindwithServer.getInstance().getData(BindwithServer.TABLEID_PLAYER, "roomid", roomid, ondatasearchListener);
-    }
-
 
     public interface OnRoomListener {
         void onCreateRoomSuccess(Room room);
@@ -126,8 +112,20 @@ public class RoomManage {
         private String owner_id;//房主的名字
         private ArrayList<String> otherplayersid;//其他玩家的_id
 
+        public int getPlayersnum() {
+            return playersnum;
+        }
+
         public void setPlayersnum(int playersnum) {
             this.playersnum = playersnum;
+        }
+
+        public String getOwner_id() {
+            return owner_id;
+        }
+
+        public void setOwner_id(String owner_id) {
+            this.owner_id = owner_id;
         }
 
         public int getNeedplayernum() {
@@ -216,6 +214,19 @@ public class RoomManage {
                 return true;
             else
                 return false;
+        }
+
+        /**
+         * 获取某个房间里的所有玩家的对象
+         *
+         * @param ondatasearchListener
+         */
+        public void getPlayersByRoom(BindwithServer.OndatasearchListener ondatasearchListener) {
+            String roomid = BindwithServer.getInstance().get_id(this);
+            if (roomid == null)
+                ondatasearchListener.fail("room is not exist");
+            else
+                BindwithServer.getInstance().getData(BindwithServer.TABLEID_PLAYER, "roomid", roomid, ondatasearchListener);
         }
     }
 }

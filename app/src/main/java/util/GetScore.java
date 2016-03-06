@@ -6,7 +6,7 @@ import com.example.isky.flaggame.role.Monster;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.Sapper;
 import com.example.isky.flaggame.role.Scout;
-import com.example.isky.flaggame.role.SignMarkerManager;
+import com.example.isky.flaggame.role.SignManager;
 
 import java.util.ArrayList;
 
@@ -31,7 +31,7 @@ public class GetScore {
     }
 
     public static void getFlagScore(int team) {
-        ArrayList<RoleSign> ownTeam = SignMarkerManager.getInstance().getOwnTeamRoleSign(team);
+        ArrayList<RoleSign> ownTeam = SignManager.getInstance().getOwnTeamRoleSign(team);
         for (RoleSign player : ownTeam) {
             int score = player.getScore() + 50;
             player.setScore(score);
@@ -54,7 +54,7 @@ public class GetScore {
     }
 
     public static void mineBoomScore(Mine mine) {
-        Miner miner = mine.getMiner();
+        Miner miner = (Miner) (SignManager.getInstance().getSignBySignature(mine.getMinerSignature()));
         int score = miner.getScore() + 10;
         miner.setScore(score);
     }

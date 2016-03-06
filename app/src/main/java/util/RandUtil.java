@@ -125,14 +125,14 @@ public class RandUtil {
     }
 
     /**
-     * 返回从某个开始点以一定速度移动到目标点的
+     * 返回从起始点向目标点移动了一定距离后的坐标
      *
-     * @param start
-     * @param goal
-     * @param speed
+     * @param start 起始点坐标
+     * @param goal  目标点坐标
+     * @param dist  移动距离 单位m
      * @return 下个点的坐标
      */
-    public static LatLng moveToGoal(LatLng start, LatLng goal, double speed) {
+    public static LatLng moveToGoal(LatLng start, LatLng goal, double dist) {
         double startLat = start.latitude / DEGREE;
         double startLog = start.longitude / DEGREE;
 
@@ -142,12 +142,12 @@ public class RandUtil {
         double deltaLat = goalLat - startLat;
         double deltaLog = goalLog - startLog;
 
-        double distance = MapUtil.getDistance(start, goal);
+        double totaldistance = MapUtil.getDistance(start, goal);
 
         double latitude, longitude;
 
-        latitude = (speed / distance * deltaLat + startLat) * DEGREE;
-        longitude = (speed / distance * deltaLog + startLog) * DEGREE;
+        latitude = (dist / totaldistance * deltaLat + startLat) * DEGREE;
+        longitude = (dist / totaldistance * deltaLog + startLog) * DEGREE;
         return new LatLng(latitude, longitude);
     }
 

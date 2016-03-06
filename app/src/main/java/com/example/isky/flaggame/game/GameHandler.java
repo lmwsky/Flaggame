@@ -9,6 +9,7 @@ import com.example.isky.flaggame.role.FixedSign;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.Sign;
 import com.example.isky.flaggame.role.SignManager;
+import com.example.isky.flaggame.role.WalkPath2AI;
 import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.example.isky.flaggame.server.PlayerManager;
@@ -21,12 +22,12 @@ import util.ToastUtil;
  * 用于捕获消息，更新游戏时的UI线程，所有对于游戏的UI修改，必须借助这个类
  */
 public class GameHandler extends Handler {
-    public final static int MSG_ADDMAINPLAYERROLESIGN = 0;
+    public final static int MSG_ADDMAINPLAYERROLESIGN_SINGLE = 0;
 
     /**
      * 添加sign到地图
      */
-    public final static int MSG_ADDSIGN = 1;
+    public final static int MSG_ADDSIGN_SINGLE = 1;
 
     /**
      * 从地图移除sign
@@ -57,6 +58,11 @@ public class GameHandler extends Handler {
      */
     public static final int MSG_ENDGAME = 9;
     public static final int MSG_BINDWALKPATHAI = 10;
+    /**
+     * 添加sign到地图
+     */
+    public final static int MSG_ADDSIGN_MULTI = 11;
+    public static final int MSG_ADDSIGN = 12;//通用的addsign
 
     private static Handler handler;
     private static OnSendGameEventToServerListener onSendGameEventToServerListener = new OnSendGameEventToServerListener();
@@ -87,17 +93,11 @@ public class GameHandler extends Handler {
         GameHandler.handler = handler;
     }
 
-    /**
-     * 传输一个msg，msg.what=type,msg.obj=object
-     *
-     * @param type   传输的事件的类型，可以通过GameHandler.MSG_...来获得
-     * @param object 传输的数据
-     * @param <T>    支持任意泛型
-     */
-    static public <T> void doGameEvent(int type, T object) {
+
+    static public void doGameEventInLocal(GameEventFactory.GameEvent gameEvent) {
         Message message = new Message();
-        message.what = type;
-        message.obj = object;
+        message.what = gameEvent.getEventtype();
+        message.obj = gameEvent;
         if (handler != null)
             handler.sendMessage(message);
     }
@@ -109,7 +109,16 @@ public class GameHandler extends Handler {
      */
     static public void doGameEventAndSendifNeed(GameEventFactory.GameEvent gameEvent) {
         Message message = new Message();
+
         message.what = gameEvent.getEventtype();
+        if (message.what == MSG_ADDSIGN) {
+            if (GameConfig.gametype == GameConfig.GAMETYPE_MULTIPLAYER)
+                message.what = MSG_ADDSIGN_MULTI;
+            else
+                message.what = MSG_ADDSIGN_SINGLE;
+        }
+
+
         message.obj = gameEvent;
         if (handler != null) {
             handler.sendMessage(message);
@@ -152,93 +161,107 @@ public class GameHandler extends Handler {
         Object gsonObject = null;
         GameEventFactory.GameEvent gameEvent = (GameEventFactory.GameEvent) (msg.obj);
         try {
-
-            gsonObject = gson.fromJson(gameEvent.getGson(), Class.forName(gameEvent.getGsonclassname()));
+            String gson = gameEvent.getGson();
+            if (gson != null)
+                gsonObject = this.gson.fromJson(gson, Class.forName(gameEvent.getGsonclassname()));
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
-        if (gsonObject != null) {
-            switch (msg.what) {
-                case MSG_ADDMAINPLAYERROLESIGN: {
-                    RoleSign mainplayer = (RoleSign) gsonObject;
-                    SignManager.getInstance().addMainPlayerToMap(mainplayer);
+        switch (msg.what) {
+            case MSG_ADDMAINPLAYERROLESIGN_SINGLE: {
+                RoleSign mainplayer = (RoleSign) gsonObject;
+                SignManager.getInstance().addMainPlayerToMap(mainplayer);
+                if (mainplayer != null) {
                     mainplayer.addOnSignListener(GameManager.onSinglePlayerMainPlayerlistener);
-                    //添加为定位的位置接收者
-                    LocationServiceManager.getInstance().setLocationInfoReceiver(mainplayer);
                 }
-                break;
-                case MSG_ADDSIGN: {
-                    //添加标记，并且要添加对应的监听器
-                    //如果主玩家id与gameevent的Topalyerid一致，说明这个要添加的rolesign是主玩家
-                    if (PlayerManager.getInstance().getMainplayer().get_id().equals(gameEvent.getToplayerid())) {
-                        RoleSign mainplayer = (RoleSign) gsonObject;
-                        SignManager.getInstance().addMainPlayerToMap(mainplayer);
-                        mainplayer.addOnSignListener(GameManager.onSinglePlayerMainPlayerlistener);
-                        //添加为定位的位置接收者
-                        LocationServiceManager.getInstance().setLocationInfoReceiver(mainplayer);
-
-
-                        //绑定主玩家对象和主玩家角色，主玩家角色加入地图，开始发送位置
-                        SignManager.getInstance().bindMainplayerAsLocationSender(PlayerManager.getInstance().getMainplayer());
-                        //添加监听器
-                        SignManager.getInstance().bindRoleSignWithPlayerid(mainplayer.getSignature(), PlayerManager.getInstance().getMainplayer().get_id());
-
-
-                    } else {
-                        SignManager.getInstance().addSignToMap(((Sign) gsonObject));
-                        Sign sign = (Sign) gsonObject;
-                        if (gsonObject instanceof FixedSign)
-                            sign.addOnSignListener(GameManager.onFixedSignListener);
-                        else
-                            sign.addOnSignListener(GameManager.onOtherRolesignlistener);
-
-                        if (GameConfig.gametype == GameConfig.GAMETYPE_MULTIPLAYER) {
-                            if (sign instanceof RoleSign) {
-                                //绑定rolesign为player的位置接收者，当player的位置改变时，rolesign也发生变化
-                                SignManager.getInstance().bindRoleSignWithPlayerid(sign.getSignature(), gameEvent.getToplayerid());
-                                //player开始和服务器端进行同步
-                                BindwithServer.getInstance().startReceivePlayerLocation(SignManager.getInstance().getPlayerByPlayerid(gameEvent.getToplayerid()));
-                            }
-                        }
-                    }
-                }
-                break;
-
-                case MSG_REMOVESIGN: {
-                    //gsonObject 存的是要移除的Sign的唯一签名
-                    SignManager.getInstance().remove((String) gsonObject);
-                }
-                break;
-                case MSG_SWITCHICONTODIE: {
-                    Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
-                    SignManager.getInstance().setLastLiveBitDescriptor((String) gsonObject, sign.getIcon());
-                    sign.setIcon(GameConfig.mainplayerBitmapDie);
-                }
-                break;
-                case MSG_SWITCHICONTOLIVE: {
-                    Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
-                    sign.setIcon(SignManager.getInstance().getLastLiveBitDescriptor((String) gsonObject));
-                }
-                break;
-                    /*在地图上显示sign最新的位置*/
-                case MSG_MOVESIGN: {
-                    Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
-                    SignManager.getInstance().move(sign);
-                }
-                break;
-                case MSG_SHOWTOAST:
-                    if (activity != null)
-                        ToastUtil.show(activity, (String) gsonObject);
-                    break;
-                case MSG_STARTGAME:
-                    gameManager.StartGame();
-                    break;
-                case MSG_ENDGAME:
-                    gameManager.EndGame();
-                    break;
-                default:
-                    break;
+                //添加为定位的位置接收者
+                LocationServiceManager.getInstance().setLocationInfoReceiver(mainplayer);
             }
+            break;
+            case MSG_ADDSIGN_SINGLE: {
+                SignManager.getInstance().addSignToMap(((Sign) gsonObject));
+                Sign sign = (Sign) gsonObject;
+                if (gsonObject instanceof FixedSign)
+                    sign.addOnSignListener(GameManager.onFixedSignListener);
+                else
+                    sign.addOnSignListener(GameManager.onOtherRolesignlistener);
+            }
+            break;
+            case MSG_ADDSIGN_MULTI: {
+                //添加标记，并且要添加对应的监听器
+                //如果主玩家id与gameevent的Topalyerid一致，说明这个要添加的rolesign是主玩家
+                PlayerManager.Player mainplayer = PlayerManager.getInstance().getMainplayer();
+                if (mainplayer != null && mainplayer.get_id().equals(gameEvent.getToplayerid())) {
+                    RoleSign mainpalyerrolesign = (RoleSign) gsonObject;
+                    SignManager.getInstance().addMainPlayerToMap(mainpalyerrolesign);
+                    mainpalyerrolesign.addOnSignListener(GameManager.onSinglePlayerMainPlayerlistener);
+                    //添加为定位的位置接收者
+                    LocationServiceManager.getInstance().setLocationInfoReceiver(mainpalyerrolesign);
+                    //绑定主玩家对象和主玩家角色，主玩家角色加入地图，开始发送位置
+                    SignManager.getInstance().bindMainplayerAsLocationSender(mainplayer);
+                    //添加监听器
+                    SignManager.getInstance().bindRoleSignWithPlayerid(mainpalyerrolesign.getSignature(), mainplayer.get_id());
+                } else {
+                    SignManager.getInstance().addSignToMap(((Sign) gsonObject));
+                    Sign sign = (Sign) gsonObject;
+                    if (gsonObject instanceof FixedSign)
+                        sign.addOnSignListener(GameManager.onFixedSignListener);
+                    else
+                        sign.addOnSignListener(GameManager.onOtherRolesignlistener);
+
+                    if (sign instanceof RoleSign) {
+                        //绑定rolesign为player的位置接收者，当player的位置改变时，rolesign也发生变化
+                        SignManager.getInstance().bindRoleSignWithPlayerid(sign.getSignature(), gameEvent.getToplayerid());
+                        //player开始和服务器端进行同步
+                        BindwithServer.getInstance().startReceivePlayerLocation(SignManager.getInstance().getPlayerByPlayerid(gameEvent.getToplayerid()));
+                    }
+
+                }
+            }
+            break;
+            case MSG_REMOVESIGN: {
+                //gsonObject 存的是要移除的Sign的唯一签名
+                SignManager.getInstance().remove((String) gsonObject);
+            }
+            break;
+            case MSG_SWITCHICONTODIE: {
+                Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
+                SignManager.getInstance().setLastLiveBitDescriptor((String) gsonObject, sign.getIcon());
+                sign.setIcon(GameConfig.mainplayerBitmapDie);
+            }
+            break;
+            case MSG_SWITCHICONTOLIVE: {
+                Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
+                sign.setIcon(SignManager.getInstance().getLastLiveBitDescriptor((String) gsonObject));
+            }
+            break;
+                    /*在地图上显示sign最新的位置*/
+            case MSG_MOVESIGN: {
+                Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
+                SignManager.getInstance().move(sign);
+            }
+            break;
+
+            case MSG_SHOWTOAST:
+                if (activity != null)
+                    ToastUtil.show(activity, (String) gsonObject);
+                break;
+            case MSG_BINDWALKPATHAI: {
+                Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
+                if (sign != null) {
+                    ((RoleSign) sign).setAi(new WalkPath2AI(sign.getLatLng(),
+                            SignManager.getInstance().getWalkPathList(), sign.getSignature()));
+                }
+            }
+            break;
+            case MSG_STARTGAME:
+                gameManager.StartGame();
+                break;
+            case MSG_ENDGAME:
+                gameManager.EndGame();
+                break;
+            default:
+                break;
         }
 
         super.handleMessage(msg);

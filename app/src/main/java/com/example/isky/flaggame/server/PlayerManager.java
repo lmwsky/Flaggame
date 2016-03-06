@@ -345,6 +345,11 @@ public class PlayerManager {
             this.roomid = roomid;
         }
 
+        public boolean isMainPlayer() {
+            if (PlayerManager.getInstance().getMainplayer() == this)
+                return true;
+            else return false;
+        }
 
     }
 }

@@ -17,7 +17,8 @@ import util.RandUtil;
  */
 public class WalkPathAI implements AI {
     private static long UNMOVE = -1;
-    private double race = 0.01;//移动速度 km/s
+    private final String roleSignSignature;
+    private double race = 0.05;//移动速度 km/s
     private LatLng nowLocation;
     private long lastMoveTime = UNMOVE;//上一次获取位置的时间，尚未获取则为UNMOVE
     private List<WalkStep> walkStepList = null;
@@ -25,9 +26,10 @@ public class WalkPathAI implements AI {
     private int nowstep_index;
     private int num_stepnum = 0;
 
-    public WalkPathAI(LatLng latLng, List<WalkStep> walkStepList) {
+    public WalkPathAI(LatLng latLng, List<WalkStep> walkStepList, String roleSignSignature) {
         nowLocation = new LatLng(latLng.latitude, latLng.longitude);
         this.walkStepList = walkStepList;
+        this.roleSignSignature = roleSignSignature;
         num_stepnum = walkStepList.size();
         getGoal();
     }
@@ -41,36 +43,35 @@ public class WalkPathAI implements AI {
             double distance = detatime * race;//移动距离，单位km
 
             double tempLength = MapUtil.getDistance(nowLocation, goal);
-            Log.i("xwk", "" + tempLength);
             if (tempLength < 5.0) {
                 //Todo num_stepnum is could be 0
-                Log.i("xwk", "nowstep_index = " + nowstep_index);
                 if (nowstep_index == 0) {
                     goal = new LatLng(walkStepList.get(1).getPolyline().get(0).getLatitude(), walkStepList.get(1).getPolyline().get(0).getLongitude());
                     nowstep_index = 1;
-                    nowLocation = RandUtil.moveToGoal(nowLocation, goal, distance);
                 } else if (nowstep_index == -1) {
                     goal = new LatLng(walkStepList.get(walkStepList.size() - 2).getPolyline().get(0).getLatitude(), walkStepList.get(walkStepList.size() - 2).getPolyline().get(0).getLongitude());
                     nowstep_index = walkStepList.size() - 2;
-                    nowLocation = RandUtil.moveToGoal(nowLocation, goal, distance);
                 } else {
                     double random = Math.random();
                     if (random >= 0.5) {
                         goal = new LatLng(walkStepList.get(nowstep_index + 1).getPolyline().get(0).getLatitude(), walkStepList.get(nowstep_index + 1).getPolyline().get(0).getLongitude());
                         nowstep_index = nowstep_index + 1;
-                        nowLocation = RandUtil.moveToGoal(nowLocation, goal, distance);
                     } else {
                         goal = new LatLng(walkStepList.get(nowstep_index - 1).getPolyline().get(0).getLatitude(), walkStepList.get(nowstep_index - 1).getPolyline().get(0).getLongitude());
                         nowstep_index = nowstep_index - 1;
-                        nowLocation = RandUtil.moveToGoal(nowLocation, goal, distance);
                     }
                 }
-            } else {
-                //    goal = new LatLng(walkStepList.get(nowstep_index).getPolyline().get(0).getLatitude(), walkStepList.get(nowstep_index).getPolyline().get(0).getLongitude());
-                nowLocation = RandUtil.moveToGoal(nowLocation, goal, distance);
             }
+            nowLocation = RandUtil.moveToGoal(nowLocation, goal, distance);
+
+
+            Sign roleSign = SignManager.getInstance().getSignBySignature(roleSignSignature);
+            if (roleSign != null)
+                ((RoleSign) roleSign).attack(SignManager.getInstance().getOtherTeamRoleSign(roleSign.getTeam()));
+
 
         }
+
         return nowLocation;
     }
 
@@ -104,20 +105,6 @@ public class WalkPathAI implements AI {
         return index;
     }
 
-    @Override
-    public double getRace() {
-        return race;
-    }
-
-    /**
-     * 设置速度
-     *
-     * @param race 单位km/s
-     */
-    public void setRace(double race) {
-        this.race = race;
-
-    }
 
     @Override
     public void startwork() {
