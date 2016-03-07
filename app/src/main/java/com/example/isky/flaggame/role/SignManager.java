@@ -1,22 +1,18 @@
 package com.example.isky.flaggame.role;
 
 import android.graphics.Color;
-import android.location.Location;
 import android.support.annotation.Nullable;
 
 import com.amap.api.maps2d.AMap;
-import com.amap.api.maps2d.LocationSource;
 import com.amap.api.maps2d.model.BitmapDescriptor;
 import com.amap.api.maps2d.model.Circle;
 import com.amap.api.maps2d.model.CircleOptions;
-import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.MyLocationStyle;
 import com.amap.api.services.route.WalkStep;
 import com.example.isky.flaggame.game.GameConfig;
 import com.example.isky.flaggame.game.GameManager;
-import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.example.isky.flaggame.server.PlayerManager;
 
@@ -436,31 +432,6 @@ public class SignManager {
 
     public void bindRoleSignWithPlayerid(String roleSignsignature, String playerid) {
         playeridRoleSignsignatureHashMap.put(playerid, roleSignsignature);
-    }
-
-    /**
-     * 将主玩家角色的位置与player进行绑定，每当主玩家角色的位置改变，上传到服务器
-     *
-     * @param player
-     */
-    public void bindMainplayerAsLocationSender(final PlayerManager.Player player) {
-        if (mainplayer == null) {
-            try {
-                throw new Exception("Mainplayer is not exist");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            LocationSource.OnLocationChangedListener mainplayerlocationsenderlistener = new LocationSource.OnLocationChangedListener() {
-                @Override
-                public void onLocationChanged(Location location) {
-                    player.setLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
-                    BindwithServer.getInstance().sendPlayerLocation(player);
-                }
-            };
-            LocationServiceManager.getInstance().registerOnLocationchangelistener(mainplayerlocationsenderlistener);
-
-        }
     }
 
     public RoleSign getBindingRolesignByPlayer(PlayerManager.Player player) {

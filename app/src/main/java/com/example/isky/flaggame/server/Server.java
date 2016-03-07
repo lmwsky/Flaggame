@@ -1,7 +1,6 @@
 package com.example.isky.flaggame.server;
 
 import android.support.annotation.Nullable;
-import android.util.Log;
 
 import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.services.cloud.CloudItem;
@@ -38,13 +37,13 @@ import util.JsonUtil;
  * Created by isky on 2016/2/22.
  * 实现了这个接口的类能够和云端的数据进行绑定
  */
-public class BindwithServer {
+public class Server {
     public static final String TABLEID_ROOM = "56d111d4305a2a32886cd3a3";
     public static final String TABLEID_PLAYER = "56d3ba587bbf197f399b96f1";
     public static final String TABLEID_EVENT = "56d8f970305a2a3288be05a3";
     private static final long UPDATEPLAYERLOCATION_DELAY = 1100;
     private static final long DELAY_QUERY = 1000;//每1s查询一次事件
-    private static BindwithServer bindwithServer;
+    private static Server server;
     public String minid = "0";
     private HashMap<String, String> tablenametableidmap = new HashMap<>();//tablename 与 tableid的map
     private HashMap<Object, String> objecttableidmap = new HashMap<>();//object 与tableid的map
@@ -55,10 +54,10 @@ public class BindwithServer {
     private Timer eventQueryTimer;
     private QueryTask queryTask;
 
-    private BindwithServer() {
-        bindTablenamewithTableid(RoomManage.Room.class.getName(), BindwithServer.TABLEID_ROOM);
-        bindTablenamewithTableid(PlayerManager.Player.class.getName(), BindwithServer.TABLEID_PLAYER);
-        bindTablenamewithTableid(GameEventFactory.GameEvent.class.getName(), BindwithServer.TABLEID_PLAYER);
+    private Server() {
+        bindTablenamewithTableid(RoomManage.Room.class.getName(), Server.TABLEID_ROOM);
+        bindTablenamewithTableid(PlayerManager.Player.class.getName(), Server.TABLEID_PLAYER);
+        bindTablenamewithTableid(GameEventFactory.GameEvent.class.getName(), Server.TABLEID_EVENT);
 
         mCloudSearch = new CloudSearch(GameApplication.getApplication());
 
@@ -66,10 +65,10 @@ public class BindwithServer {
         mCloudSearch.setOnCloudSearchListener(onCloudeSearchlistener);
     }
 
-    public static BindwithServer getInstance() {
-        if (bindwithServer == null)
-            bindwithServer = new BindwithServer();
-        return bindwithServer;
+    public static Server getInstance() {
+        if (server == null)
+            server = new Server();
+        return server;
     }
 
     public void setQueryGameEventMin_id(int min_id) {
@@ -201,18 +200,19 @@ public class BindwithServer {
                 @Override
                 public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                     try {
-                        if (response.getInt("status") != 1)
+                        if (response.getInt("status") != 1) {
                             if (onCreateDataListener != null) {
                                 onCreateDataListener.fail(response.getString("info"));
-                            } else {
-
-                                String _id = response.getString("_id");
-                                object_idmap.put(object, _id);
-
-                                if (onCreateDataListener != null) {
-                                    onCreateDataListener.success(_id);
-                                }
                             }
+                        } else {
+
+                            String _id = response.getString("_id");
+                            object_idmap.put(object, _id);
+
+                            if (onCreateDataListener != null) {
+                                onCreateDataListener.success(_id);
+                            }
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                         if (onCreateDataListener != null) {
@@ -274,25 +274,6 @@ public class BindwithServer {
         }
     }
 
-    private String UpdateFirstWord(String word) {
-        return (word.charAt(0) + "").toUpperCase() + word.substring(1);
-    }
-
-    public <T> boolean bindTablebyName(T object, String name) {
-        String tableid = tablenametableidmap.get(name);
-        if (tableid == null) {
-            Log.d("hh", "表不存在");
-            return false;
-        }
-        if (objecttableidmap.containsKey(object)) {
-            Log.d("hh", "");
-            return false;
-        }
-
-        objecttableidmap.put(object, tableid);
-        return true;
-    }
-
     /**
      * 根据tableid,_id来获取数据
      *
@@ -311,7 +292,7 @@ public class BindwithServer {
         CloudSearch.Query mQuery = null;
         CloudSearch.SearchBound bound = new CloudSearch.SearchBound("全国");
         try {
-            mQuery = new CloudSearch.Query(tableid, "", bound);
+            mQuery = new CloudSearch.Query(tableid, null, bound);
             mQuery.addFilterString(key, keyValue);
             mQuery.setPageSize(10);
             CloudSearch.Sortingrules sorting = new CloudSearch.Sortingrules(
@@ -339,7 +320,7 @@ public class BindwithServer {
 
         CloudSearch.Query mQuery = null;
         try {
-            mQuery = new CloudSearch.Query(tableid, " ", bound);
+            mQuery = new CloudSearch.Query(tableid, null, bound);
             mQuery.setPageSize(10);
             CloudSearch.Sortingrules sorting = new CloudSearch.Sortingrules(
                     "_id", false);
@@ -362,7 +343,7 @@ public class BindwithServer {
         CloudSearch.Query mQuery = null;
         CloudSearch.SearchBound bound = new CloudSearch.SearchBound("全国");
         try {
-            mQuery = new CloudSearch.Query(tableid, "", bound);
+            mQuery = new CloudSearch.Query(tableid, null, bound);
             mQuery.addFilterNum("_id", minid + "", maxid + "");
             if (key != null && keyvalue != null)
                 mQuery.addFilterString(key, keyvalue);
@@ -525,7 +506,7 @@ public class BindwithServer {
      */
     public void startReceiveGameEvent() {
         //接受事件
-        startReceiveGameEvent(0 + "", new BindwithServer.OnGameEventReceiveListener() {
+        startReceiveGameEvent(0 + "", new Server.OnGameEventReceiveListener() {
             @Override
             public void OnReceiveEvent(ArrayList<Object> gameEventlsit) {
                 for (Object gameevent : gameEventlsit)
@@ -626,7 +607,7 @@ public class BindwithServer {
                 if (cloudResult.getTotalCount() == 0) {
                     ondatasearchListener.success(datas);
                 } else {
-                    String classname = clouditems.get(0).getCustomfield().get("class");
+                    String classname = clouditems.get(0).getCustomfield().get("clss");
                     try {
                         Class clss = Class.forName(classname);
 
@@ -653,7 +634,7 @@ public class BindwithServer {
                 if (ondatasearchListener != null) {
                     Class clss;
                     try {
-                        clss = Class.forName(cloudItemDetail.getCustomfield().get("class"));
+                        clss = Class.forName(cloudItemDetail.getCustomfield().get("clss"));
                         Gson gson = new Gson();
                         Object item = gson.fromJson(cloudItemDetail.getCustomfield().get("gson"), clss);
                         object_idmap.put(item, cloudItemDetail.getID());//将id映射保存到_idmap
@@ -678,7 +659,7 @@ public class BindwithServer {
 
         public QueryTask(OnGameEventReceiveListener onGameEventReceiveListener) {
             this.onGameEventReceiveListener = onGameEventReceiveListener;
-            RoomManage.Room room = PlayerManager.getInstance().getCurrentroom();
+            RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
             if (room != null)
                 roomid = room.get_id();
         }
@@ -695,7 +676,7 @@ public class BindwithServer {
         @Override
         public void run() {
             if (roomid != null) {
-                BindwithServer.getInstance().getDatabyid(TABLEID_EVENT, min_id, Integer.MAX_VALUE, "roomid", roomid, new OndatasearchListener() {
+                Server.getInstance().getDatabyid(TABLEID_EVENT, min_id, Integer.MAX_VALUE, "roomid", roomid, new OndatasearchListener() {
                     @Override
                     public void success(ArrayList<Object> datas) {
                         int size = datas.size();

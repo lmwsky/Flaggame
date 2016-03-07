@@ -8,10 +8,10 @@ import com.example.isky.flaggame.role.Flag;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.SignFactory;
 import com.example.isky.flaggame.role.SignManager;
-import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.RoomManage;
+import com.example.isky.flaggame.server.Server;
 
 import java.util.ArrayList;
 
@@ -41,7 +41,7 @@ public class MultiPlayerGame extends GameManager {
             return;
         ToastUtil.show(activity, "initgame");
         PlayerManager.Player player = PlayerManager.getInstance().getMainplayer();
-        RoomManage.Room room = PlayerManager.getInstance().getCurrentroom();
+        RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
 
         if (player == null || room == null) {
             try {
@@ -89,8 +89,8 @@ public class MultiPlayerGame extends GameManager {
         ToastUtil.show(activity, "endGame");
         /*摧毁定位服务的实例已经所有监听*/
         LocationServiceManager.getInstance().destory();
-        BindwithServer.getInstance().stopReceiveGameEvent();
-        BindwithServer.getInstance().stopReceivePlayerLocation();
+        Server.getInstance().stopReceiveGameEvent();
+        Server.getInstance().stopReceivePlayerLocation();
         SignManager.getInstance().initMap();//重新设置地图定位
         SignManager.getInstance().clear();
     }
@@ -99,10 +99,10 @@ public class MultiPlayerGame extends GameManager {
      * 以房主的方式来进行初始化游戏
      */
     public void InitGameByOwner() {
-        final RoomManage.Room room = PlayerManager.getInstance().getCurrentroom();
+        final RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
 
         if (room != null) {
-            room.getPlayersByRoom(new BindwithServer.OndatasearchListener() {
+            room.getPlayersByRoom(new Server.OndatasearchListener() {
                 @Override
                 public void success(ArrayList<Object> datas) {
                     /*获取了在房间里的所有玩家*/
@@ -131,7 +131,7 @@ public class MultiPlayerGame extends GameManager {
                     for (Flag flag : flags)
                         GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddFixedSignEvent(flag));
 
-                    BindwithServer.getInstance().startReceiveGameEvent();
+                    Server.getInstance().startReceiveGameEvent();
 
                 }
 
@@ -224,10 +224,10 @@ public class MultiPlayerGame extends GameManager {
      * 以房间的普通成员的方式来初始化游戏
      */
     public void InitGameByOthers() {
-        final RoomManage.Room room = PlayerManager.getInstance().getCurrentroom();
+        final RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
 
         if (room != null) {
-            room.getPlayersByRoom(new BindwithServer.OndatasearchListener() {
+            room.getPlayersByRoom(new Server.OndatasearchListener() {
                 @Override
                 public void success(ArrayList<Object> datas) {
                     /*获取了在房间里的所有玩家*/
@@ -239,7 +239,7 @@ public class MultiPlayerGame extends GameManager {
                             allplayerlist.add(player);
                     }
                     SignManager.getInstance().setAllplayer(allplayerlist);
-                    BindwithServer.getInstance().startReceiveGameEvent();
+                    Server.getInstance().startReceiveGameEvent();
 
                 }
 

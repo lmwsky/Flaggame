@@ -1,5 +1,7 @@
 package com.example.isky.flaggame.server;
 
+import android.util.Log;
+
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -100,8 +102,8 @@ public class RequestJsonFactory {
         JsonElement objectjsonElement = gson.toJsonTree(object);
         JsonObject jsonObject = objectjsonElement.getAsJsonObject();
 
-        if (jsonObject.has("latlng")) {
-            JsonElement latlngelement = objectjsonElement.getAsJsonObject().get("latlng");
+        if (jsonObject.has("latLng")) {
+            JsonElement latlngelement = objectjsonElement.getAsJsonObject().get("latLng");
             com.google.gson.JsonObject latlngjsonObject = latlngelement.getAsJsonObject();
             JsonElement latitude = latlngjsonObject.get("latitude");
             JsonElement longitude = latlngjsonObject.get("longitude");
@@ -110,14 +112,14 @@ public class RequestJsonFactory {
             _location(0.0, 0.0);
 
 
-        customerValue("class", object.getClass().getName());
-        gson(objectjsonElement);
+        RequestJsonFactory requestJsonFactory = customerValue("clss", object.getClass().getName()).gson(objectjsonElement);
          /*特殊处理，将其变为自定义属性*/
         if (jsonObject.has("roomid")) {
             String roomid = jsonObject.get("roomid").getAsString();
-            customerValue("roomid", roomid);
+            requestJsonFactory.customerValue("roomid", roomid);
         }
-        return this;
+        Log.i("hh json", requestJsonFactory.getJsonstr());
+        return requestJsonFactory;
     }
 
     /**

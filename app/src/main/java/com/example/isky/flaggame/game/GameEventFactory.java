@@ -145,7 +145,7 @@ public class GameEventFactory {
         public GameEvent() {
 
             if (GameConfig.gametype == GameConfig.GAMETYPE_MULTIPLAYER) {
-                RoomManage.Room room = PlayerManager.getInstance().getCurrentroom();
+                RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
                 if (room != null)
                     setRoomid(room.get_id());
                 PlayerManager.Player player = PlayerManager.getInstance().getMainplayer();

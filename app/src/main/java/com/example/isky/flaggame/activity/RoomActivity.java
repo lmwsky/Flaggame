@@ -13,13 +13,15 @@ import android.widget.TextView;
 
 import com.example.isky.flaggame.R;
 import com.example.isky.flaggame.game.GameConfig;
-import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.RoomManage;
+import com.example.isky.flaggame.server.Server;
 
 import java.util.ArrayList;
 import java.util.Timer;
 import java.util.TimerTask;
+
+import util.ToastUtil;
 
 /**
  * Created by x1832 on 2016/3/5.
@@ -29,7 +31,21 @@ public class RoomActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.room);
+        setView();
+    }
 
+    /**
+     * 拦截activity 的后退键处理
+     */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    public void setView() {
         ListView listView = (ListView) findViewById(R.id.lv_player);
         final PlayerManager.Player mainplayer = PlayerManager.getInstance().getMainplayer();
         final RoomManage.Room currentRoom = PlayerManager.getInstance().getCurrentRoom();
@@ -49,12 +65,11 @@ public class RoomActivity extends Activity {
         final PlayerAdapter adapter = new PlayerAdapter(this, players);
         listView.setAdapter(adapter);
 
-
-        Timer getPlayerTimer = new Timer();
+        final Timer getPlayerTimer = new Timer();
         TimerTask getPlayersTimerTask = new TimerTask() {
             @Override
             public void run() {
-                currentRoom.getPlayersByRoom(new BindwithServer.OndatasearchListener() {
+                currentRoom.getPlayersByRoom(new Server.OndatasearchListener() {
                     @Override
                     public void success(ArrayList<Object> datas) {
                         adapter.setPlayerlist(datas);
@@ -73,33 +88,91 @@ public class RoomActivity extends Activity {
                 });
             }
         };
+
         getPlayerTimer.schedule(getPlayersTimerTask, 0, 1000);
-        Button bt_startgame = (Button) findViewById(R.id.bt_startgame);
+
+        final Button bt_startgame = (Button) findViewById(R.id.bt_startgame);
         bt_startgame.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent();
-                intent.setClass(RoomActivity.this, MapActivity.class);
-                GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
-                startActivityForResult(intent, 0);
+                getPlayerTimer.cancel();
+                /*房主有责任通知其他游戏已经，通过修改房间状态*/
+                if (currentRoom.getOwner_id().equals(mainplayer.get_id())) {
+                    currentRoom.startgame(
+                            new Server.OnUpdateDataListener() {
+                                @Override
+                                public void success(String _id) {
+                                    Intent intent = new Intent();
+                                    intent.setClass(RoomActivity.this, MapActivity.class);
+                                    GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
+                                    startActivityForResult(intent, 0);
+                                }
+
+                                @Override
+                                public void fail(String info) {
+                                    ToastUtil.show(RoomActivity.this, "开始游戏发生了一点问题...");
+                                    currentRoom.init();
+                                }
+                            });
+                } else {
+                    currentRoom.setState(RoomManage.Room.START);
+                    Intent intent = new Intent();
+                    intent.setClass(RoomActivity.this, MapActivity.class);
+                    GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
+                    startActivityForResult(intent, 0);
+                }
+
             }
         });
+
+        final Timer getRoomstateTimer = new Timer();
+        TimerTask getRoomstateTask = new TimerTask() {
+            @Override
+            public void run() {
+
+                Server.getInstance().getData(Server.TABLEID_ROOM, currentRoom.get_id(), new Server.OndatasearchListener() {
+                    @Override
+                    public void success(ArrayList<Object> datas) {
+
+                    }
+
+                    @Override
+                    public void success(Object object) {
+                        RoomManage.Room newRoom = (RoomManage.Room) object;
+                        if (newRoom.isStarting()) {
+                            getRoomstateTimer.cancel();
+                            bt_startgame.callOnClick();
+                        }
+                    }
+
+                    @Override
+                    public void fail(String info) {
+
+                    }
+                });
+            }
+        };
+
+        getRoomstateTimer.schedule(getRoomstateTask, 0, 1000);
+
+
         Button bt_leaveroom = (Button) findViewById(R.id.bt_leaveroom);
         bt_leaveroom.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 if (currentRoom.getOwner_id().equals(mainplayer.get_id())) {
-                    RoomManage.getInstance().deleteRoom(currentRoom, new BindwithServer.OnDeleteDataListener() {
+                    currentRoom.abandon(new Server.OnUpdateDataListener() {
                         @Override
-                        public void success(String info) {
+                        public void success(String _id) {
                             PlayerManager.getInstance().setCurrentRoom(null);
                             RoomActivity.this.finish();
-                            Log.d("hhh", "delete room sucess");
+                            Log.d("hhh", "leave room sucess");
                         }
 
                         @Override
                         public void fail(String info) {
-                            Log.d("hhh", "delete room fail");
+                            ToastUtil.show(RoomActivity.this, "退出房间失败");
+                            currentRoom.init();
                         }
                     });
                 } else {
@@ -116,6 +189,7 @@ public class RoomActivity extends Activity {
 
                         @Override
                         public void onLeaveRoomSuccess() {
+                            PlayerManager.getInstance().setCurrentRoom(null);
                             Intent intent = new Intent(RoomActivity.this, MainActivity.class);
                             startActivity(intent);
                         }
@@ -128,18 +202,5 @@ public class RoomActivity extends Activity {
                 }
             }
         });
-
-
-    }
-
-    /**
-     * 拦截activity 的后退键处理
-     */
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            return true;
-        }
-        return super.onKeyDown(keyCode, event);
     }
 }

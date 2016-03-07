@@ -1,7 +1,5 @@
 package com.example.isky.flaggame.server;
 
-import android.util.Log;
-
 import com.amap.api.maps2d.model.LatLng;
 
 import java.util.ArrayList;
@@ -12,6 +10,8 @@ import java.util.ArrayList;
  */
 public class RoomManage {
     private static RoomManage roomManage;
+    private ArrayList<Room> roomlist;
+    private Room createRoom;
 
     private RoomManage() {
 
@@ -23,44 +23,16 @@ public class RoomManage {
         return roomManage;
     }
 
-    public void SearchRoom(LatLng latLng, int radius, BindwithServer.OndatasearchListener ondatasearchListener) {
-        BindwithServer.getInstance().getData(BindwithServer.TABLEID_ROOM, latLng, radius, ondatasearchListener);
+    public void SearchRoom(LatLng latLng, int radius, Server.OndatasearchListener ondatasearchListener) {
+
+        Server.getInstance().getData(Server.TABLEID_ROOM, latLng, radius, ondatasearchListener);
     }
 
-    /**
-     * 建立一个房间
-     *
-     * @param roomname 房间名
-     * @return
-     */
-    public void createRoom(String roomname, PlayerManager.Player player, final OnRoomListener onRoomListener) {
 
-        if (player.get_id() == null) {
-            try {
-                throw new Exception("player is not exist in the server");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
+    public void createRoom(final Room room, final OnRoomListener onRoomListener) {
 
-        }
-        /*建立房间对象*/
-        final Room room = new Room();
-        room.setLatLng(player.getLatLng());
-        room.setOwner_name(player.getPlayername());
-        room.setPlayersnum(1);
-        room.setNeedplayernum(4);
-        room.setRoomname(roomname);
-        ArrayList<String> arrayList = new ArrayList<>();
-        room.setOtherplayersid(arrayList);
-        createRoom(room, onRoomListener);
-    }
-
-    private void createRoom(final Room room, final OnRoomListener onRoomListener) {
-        //绑定房间对象到表room
-        BindwithServer.getInstance().bindTablebyName(room, "room");
         //上传房间对象
-        BindwithServer.getInstance().createData(room, new BindwithServer.OnCreateDataListener() {
+        Server.getInstance().createData(room, new Server.OnCreateDataListener() {
             @Override
             public void success(String _id) {
                 onRoomListener.onCreateRoomSuccess(room);
@@ -74,18 +46,24 @@ public class RoomManage {
     }
 
 
-    public void deleteRoom(Room room) {
-        BindwithServer.getInstance().deleteData(room, new BindwithServer.OnDeleteDataListener() {
-            @Override
-            public void success(String info) {
-                Log.d("hhh", "delete room sucess");
-            }
+    public void deleteRoom(Room room, Server.OnDeleteDataListener onDeleteDataListener) {
+        Server.getInstance().deleteData(room, onDeleteDataListener);
+    }
 
-            @Override
-            public void fail(String info) {
-                Log.d("hhh", "delete room fail");
-            }
-        });
+    public ArrayList<Room> getRoomlist() {
+        return roomlist;
+    }
+
+    public void setRoomlist(ArrayList<Room> roomlist) {
+        this.roomlist = roomlist;
+    }
+
+    public Room getCreateRoom() {
+        return createRoom;
+    }
+
+    public void setCreateRoom(Room createRoom) {
+        this.createRoom = createRoom;
     }
 
 
@@ -100,8 +78,9 @@ public class RoomManage {
      * Created by isky on 2016/2/22.
      */
     public static class Room implements _idQuery {
-        private static final int PREPARE = 0;
-        private static final int START = 1;
+        public static final int PREPARE = 0;
+        public static final int START = 1;
+        public static final int ABANDON = 2;
 
         private int state = PREPARE;
         private LatLng latLng;//房间建立的经纬度
@@ -112,8 +91,54 @@ public class RoomManage {
         private String owner_id;//房主的名字
         private ArrayList<String> otherplayersid;//其他玩家的_id
 
+        public int getState() {
+            return state;
+        }
+
+        public void setState(int state) {
+            this.state = state;
+        }
+
+        public boolean isStarting() {
+            if (state == START)
+                return true;
+            else return false;
+        }
+
+        public boolean isAbandon() {
+            if (state == ABANDON)
+                return false;
+            else return true;
+        }
+
+        /**
+         * 房间状态设置为准备
+         */
+        public void init() {
+            state = PREPARE;
+        }
+
+        /**
+         * 废弃当前房间,并且上传到服务器
+         */
+        public void abandon(Server.OnUpdateDataListener onUpdateDataListener) {
+            state = ABANDON;
+            Server.getInstance().updateData(Server.TABLEID_ROOM, get_id(),
+                    "state", state + "", onUpdateDataListener);
+        }
+
+        /**
+         * 开始当前房间,并且上传到服务器
+         */
+        public void startgame(Server.OnUpdateDataListener onUpdateDataListener) {
+            state = START;
+            Server.getInstance().updateData(Server.TABLEID_ROOM, get_id(),
+                    "state", state + "", onUpdateDataListener);
+        }
+
+
         public int getPlayersnum() {
-            return playersnum;
+            return otherplayersid.size() + 1;
         }
 
         public void setPlayersnum(int playersnum) {
@@ -178,7 +203,7 @@ public class RoomManage {
 
         @Override
         public String get_id() {
-            return BindwithServer.getInstance().get_id(this);
+            return Server.getInstance().get_id(this);
         }
 
         /**
@@ -221,12 +246,12 @@ public class RoomManage {
          *
          * @param ondatasearchListener
          */
-        public void getPlayersByRoom(BindwithServer.OndatasearchListener ondatasearchListener) {
-            String roomid = BindwithServer.getInstance().get_id(this);
+        public void getPlayersByRoom(Server.OndatasearchListener ondatasearchListener) {
+            String roomid = Server.getInstance().get_id(this);
             if (roomid == null)
                 ondatasearchListener.fail("room is not exist");
             else
-                BindwithServer.getInstance().getData(BindwithServer.TABLEID_PLAYER, "roomid", roomid, ondatasearchListener);
+                Server.getInstance().getData(Server.TABLEID_PLAYER, "roomid", roomid, ondatasearchListener);
         }
     }
 }

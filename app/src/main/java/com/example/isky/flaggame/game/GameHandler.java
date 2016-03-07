@@ -10,9 +10,9 @@ import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.Sign;
 import com.example.isky.flaggame.role.SignManager;
 import com.example.isky.flaggame.role.WalkPath2AI;
-import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.example.isky.flaggame.server.PlayerManager;
+import com.example.isky.flaggame.server.Server;
 import com.google.gson.Gson;
 
 import util.ToastUtil;
@@ -149,8 +149,8 @@ public class GameHandler extends Handler {
      * @param gameEvent            游戏事件
      * @param onCreateDataListener 发送游戏事件后的监听器
      */
-    public static void sendGameEvent(GameEventFactory.GameEvent gameEvent, BindwithServer.OnCreateDataListener onCreateDataListener) {
-        BindwithServer.getInstance().createData(gameEvent, onCreateDataListener);
+    public static void sendGameEvent(GameEventFactory.GameEvent gameEvent, Server.OnCreateDataListener onCreateDataListener) {
+        Server.getInstance().createData(gameEvent, onCreateDataListener);
     }
 
     //让其他线程能通过发送msg来操作UI线程
@@ -198,7 +198,7 @@ public class GameHandler extends Handler {
                     //添加为定位的位置接收者
                     LocationServiceManager.getInstance().setLocationInfoReceiver(mainpalyerrolesign);
                     //绑定主玩家对象和主玩家角色，主玩家角色加入地图，开始发送位置
-                    SignManager.getInstance().bindMainplayerAsLocationSender(mainplayer);
+                    mainplayer.bindMainplayerAsLocationSender();
                     //添加监听器
                     SignManager.getInstance().bindRoleSignWithPlayerid(mainpalyerrolesign.getSignature(), mainplayer.get_id());
                 } else {
@@ -213,7 +213,7 @@ public class GameHandler extends Handler {
                         //绑定rolesign为player的位置接收者，当player的位置改变时，rolesign也发生变化
                         SignManager.getInstance().bindRoleSignWithPlayerid(sign.getSignature(), gameEvent.getToplayerid());
                         //player开始和服务器端进行同步
-                        BindwithServer.getInstance().startReceivePlayerLocation(SignManager.getInstance().getPlayerByPlayerid(gameEvent.getToplayerid()));
+                        Server.getInstance().startReceivePlayerLocation(SignManager.getInstance().getPlayerByPlayerid(gameEvent.getToplayerid()));
                     }
 
                 }
@@ -274,7 +274,7 @@ public class GameHandler extends Handler {
     /**
      * 发送游戏事件到服务器的监听器
      */
-    public static class OnSendGameEventToServerListener implements BindwithServer.OnCreateDataListener {
+    public static class OnSendGameEventToServerListener implements Server.OnCreateDataListener {
         @Override
         public void success(String _id) {
             Log.d("hh", "sendGameevent " + _id);

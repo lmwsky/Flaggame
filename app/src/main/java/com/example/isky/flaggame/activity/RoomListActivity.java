@@ -11,9 +11,9 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.example.isky.flaggame.R;
-import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.RoomManage;
+import com.example.isky.flaggame.server.Server;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -24,73 +24,17 @@ import util.ToastUtil;
 
 /**
  * Created by x1832 on 2016/3/4.
+ * 房间列表
  */
 public class RoomListActivity extends Activity implements AdapterView.OnItemClickListener, View.OnClickListener {
 
-    private BindwithServer.OndatasearchListener loaddatalistener;
+    private Server.OndatasearchListener loaddatalistener;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_roomlist);
-
-        ListView lv = (ListView) findViewById(R.id.lv_room);
-        final List<Map<String, String>> list = new ArrayList<Map<String, String>>();
-        final MyAdapter adapter = new MyAdapter(this, list);
-        lv.setAdapter(adapter);
-        lv.setOnItemClickListener(this);
-        loaddatalistener = new BindwithServer.OndatasearchListener() {
-            @Override
-            public void success(ArrayList<Object> datas) {
-                Log.d("hh", "getdata~ " + datas.size());
-                ArrayList<RoomManage.Room> roomArrayList = new ArrayList<>();
-                for (Object o : datas) {
-                    RoomManage.Room room = (RoomManage.Room) o;
-                    roomArrayList.add(room);
-                    Map<String, String> map = new HashMap<>();
-                    map.put("roomName", room.getRoomname());
-                    map.put("realNumber", room.getPlayersnum() + "");
-                    map.put("maxNumber", room.getNeedplayernum() + "");
-                    map.put("roomid", room.get_id() + "");
-
-                    adapter.addData(map);
-                }
-                RoomManage.getInstance().setRoomlist(roomArrayList);
-
-                adapter.notifyDataSetChanged();
-
-            }
-
-            @Override
-            public void success(Object object) {
-
-            }
-
-            @Override
-            public void fail(String info) {
-                Log.d("hh", "getRoonList fail :" + info);
-            }
-        };
-
-        Button bt_quickgame = (Button) findViewById(R.id.bt_quickgame);
-        bt_quickgame.setOnClickListener(this);
-
-        Button bt_createroom = (Button) findViewById(R.id.bt_createroom);
-        bt_createroom.setOnClickListener(this);
-
-        Button bt_refresh = (Button) findViewById(R.id.bt_refresh);
-        bt_refresh.setOnClickListener(this);
-
-        Button bt_back = (Button) findViewById(R.id.bt_back);
-        bt_back.setOnClickListener(this);
-
-
-        PlayerManager.Player mainpalyer = PlayerManager.getInstance().getMainplayer();
-        if (mainpalyer != null) {
-            Log.d("hh mainplayer location", mainpalyer.getLatLng().toString());
-            RoomManage.getInstance().SearchRoom(mainpalyer.getLatLng(), 4000, loaddatalistener);
-        }
-
+        setView();
     }
 
     @Override
@@ -127,6 +71,69 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
             }
         }
 
+    }
+
+    /**
+     * 加载房间信息
+     */
+    public void loadRoomData() {
+        PlayerManager.Player mainpalyer = PlayerManager.getInstance().getMainplayer();
+        if (mainpalyer != null) {
+            RoomManage.getInstance().SearchRoom(mainpalyer.getLatLng(), 4000, loaddatalistener);
+        }
+
+    }
+
+    public void setView() {
+        Button bt_quickgame = (Button) findViewById(R.id.bt_quickgame);
+        bt_quickgame.setOnClickListener(this);
+
+        Button bt_createroom = (Button) findViewById(R.id.bt_createroom);
+        bt_createroom.setOnClickListener(this);
+
+        Button bt_refresh = (Button) findViewById(R.id.bt_refresh);
+        bt_refresh.setOnClickListener(this);
+
+        Button bt_back = (Button) findViewById(R.id.bt_back);
+        bt_back.setOnClickListener(this);
+
+
+        ListView lv = (ListView) findViewById(R.id.lv_room);
+        final List<Map<String, String>> list = new ArrayList<>();
+        final MyAdapter adapter = new MyAdapter(this, list);
+        lv.setAdapter(adapter);
+        lv.setOnItemClickListener(this);
+        loaddatalistener = new Server.OndatasearchListener() {
+            @Override
+            public void success(ArrayList<Object> datas) {
+                ArrayList<RoomManage.Room> roomArrayList = new ArrayList<>();
+                for (Object o : datas) {
+                    RoomManage.Room room = (RoomManage.Room) o;
+                    roomArrayList.add(room);
+                    Map<String, String> map = new HashMap<>();
+                    map.put("roomName", room.getRoomname());
+                    map.put("realNumber", room.getPlayersnum() + "");
+                    map.put("maxNumber", room.getNeedplayernum() + "");
+                    map.put("roomid", room.get_id() + "");
+
+                    adapter.addData(map);
+                }
+                RoomManage.getInstance().setRoomlist(roomArrayList);
+
+                adapter.notifyDataSetChanged();
+
+            }
+
+            @Override
+            public void success(Object object) {
+
+            }
+
+            @Override
+            public void fail(String info) {
+                Log.d("hh", "getRoonList fail :" + info);
+            }
+        };
     }
 
     @Override
@@ -182,10 +189,7 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
             }
             break;
             case R.id.bt_refresh:
-                PlayerManager.Player mainpalyer = PlayerManager.getInstance().getMainplayer();
-                if (mainpalyer != null) {
-                    RoomManage.getInstance().SearchRoom(mainpalyer.getLatLng(), 4000, loaddatalistener);
-                }
+                loadRoomData();
                 break;
             default:
                 break;

@@ -14,8 +14,8 @@ import com.example.isky.flaggame.role.Monster;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.SignFactory;
 import com.example.isky.flaggame.role.SignManager;
-import com.example.isky.flaggame.server.BindwithServer;
 import com.example.isky.flaggame.server.LocationServiceManager;
+import com.example.isky.flaggame.server.Server;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -72,7 +72,7 @@ public class SinglePlayerGame extends GameManager {
         final Flag flag = SignFactory.produceFlag(startlatlng, GameConfig.dist_flag, GameConfig.SINGLEGAME_MONSTERTEAM);
         GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddFixedSignEvent(flag));
 
-        BindwithServer.getInstance().queryWalkPath(startlatlng, flag.getLatLng(), new BindwithServer.OndatasearchListener() {
+        Server.getInstance().queryWalkPath(startlatlng, flag.getLatLng(), new Server.OndatasearchListener() {
             @Override
             public void success(ArrayList<Object> datas) {
 
@@ -137,7 +137,6 @@ public class SinglePlayerGame extends GameManager {
         if (gamestate != STATE_START)
             return;
         gamestate = STATE_STOP;
-        ToastUtil.show(activity, "stopGame");
     }
 
     @Override
@@ -146,13 +145,11 @@ public class SinglePlayerGame extends GameManager {
             return;
         gamestate = STATE_START;
 
-        ToastUtil.show(activity, "continueGame");
     }
 
     @Override
     public void EndGame() {
         gamestate = STATE_END;
-        ToastUtil.show(activity, "endGame");
         /*摧毁定位服务的实例已经所有监听*/
         LocationServiceManager.getInstance().destory();
 //       SignManager.getInstance().initMap();//重新设置地图定位
@@ -160,6 +157,7 @@ public class SinglePlayerGame extends GameManager {
             monster.stopmoving();
         }
         SignManager.getInstance().clear();
+        activity.finish();
     }
 
 }

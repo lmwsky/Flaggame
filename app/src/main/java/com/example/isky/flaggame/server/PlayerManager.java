@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.amap.api.maps2d.LocationSource;
 import com.amap.api.maps2d.model.LatLng;
@@ -20,7 +21,7 @@ import util.GameApplication;
 public class PlayerManager {
     private static PlayerManager playerManager;
     LocationSource.OnLocationChangedListener initlocationreceivelistener;
-    private RoomManage.Room currentroom;
+    private RoomManage.Room currentRoom;
     private Player mainplayer;
 
     private PlayerManager() {
@@ -53,12 +54,33 @@ public class PlayerManager {
     }
 
     /**
+     * 是否存在已经注册的玩家id
+     *
+     * @return
+     */
+    public boolean isPlayerRegister() {
+        String _id = getRegisterPlayerid();
+        if (_id == null)
+            return false;
+        return true;
+    }
+
+    public
+    @Nullable
+    String getRegisterPlayerid() {
+        Context cxt = GameApplication.getApplication();
+        SharedPreferences sp = cxt.getSharedPreferences("player", Context.MODE_PRIVATE);
+        String _id = sp.getString("mainplayerid", null);
+        return _id;
+    }
+
+    /**
      * 用玩家当前位置在服务器端创建一个新的玩家对象，通过回调函数返回
      *
      * @param playername
-     * @param onPlayerManagelistener
+     * @param onCreateOrGetPlayerListener
      */
-    public void createMainplayer(@NonNull String playername, @Nullable final OnPlayerManagelistener onPlayerManagelistener) {
+    public void createMainplayer(@NonNull String playername, @Nullable final OnCreateOrGetPlayerListener onCreateOrGetPlayerListener) {
         final Player player = new Player();
         player.setPlayername(playername);
 
@@ -67,26 +89,25 @@ public class PlayerManager {
             public void onLocationChanged(Location location) {
                 LocationServiceManager.getInstance().unregisterOnLocationchangelistener(initlocationreceivelistener);
                 player.setLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
-                BindwithServer.getInstance().createData(player, new BindwithServer.OnCreateDataListener() {
+                Server.getInstance().createData(player, new Server.OnCreateDataListener() {
                     @Override
                     public void success(String _id) {
+                        Log.i("hh", "create player success" + _id);
                         Context context = GameApplication.getApplication();
                         SharedPreferences sp = context.getSharedPreferences("player", Context.MODE_PRIVATE);
                         SharedPreferences.Editor editor = sp.edit();
                         editor.putString("mainplayerid", _id);
                         editor.apply();
                         mainplayer = player;
-                        if (onPlayerManagelistener != null) {
-                            onPlayerManagelistener.OnCreateOrGetPlayerSuccess(player);
+                        if (onCreateOrGetPlayerListener != null) {
+                            onCreateOrGetPlayerListener.OnCreateOrGetPlayerSuccess(player);
                         }
-
-
                     }
 
                     @Override
                     public void fail(String info) {
-                        if (onPlayerManagelistener != null) {
-                            onPlayerManagelistener.OnCreatePlayerFail(info);
+                        if (onCreateOrGetPlayerListener != null) {
+                            onCreateOrGetPlayerListener.OnCreatePlayerFail(info);
                         }
                     }
                 });
@@ -99,24 +120,21 @@ public class PlayerManager {
     /**
      * 获取之前创建的玩家，若没有则以playername创建一个
      *
-     * @param playname               玩家名
-     * @param onPlayerManagelistener
+     * @param onCreateOrGetPlayerListener 监听器
      */
-    public void getMainplayer(@NonNull final String playname, @Nullable final OnPlayerManagelistener onPlayerManagelistener) {
+    public void getMainplayer(@Nullable final OnCreateOrGetPlayerListener onCreateOrGetPlayerListener) {
         if (mainplayer != null) {
-            if (onPlayerManagelistener != null) {
-                mainplayer.setPlayername(playname);
-                onPlayerManagelistener.OnCreateOrGetPlayerSuccess(mainplayer);
+            if (onCreateOrGetPlayerListener != null) {
+                onCreateOrGetPlayerListener.OnCreateOrGetPlayerSuccess(mainplayer);
             }
         } else {
-            Context cxt = GameApplication.getApplication();
-            SharedPreferences sp = cxt.getSharedPreferences("player", Context.MODE_PRIVATE);
-            String _id = sp.getString("mainplayerid", null);
+            final String _id = getRegisterPlayerid();
             //之前没有创建过
             if (_id == null) {
-                createMainplayer(playname, onPlayerManagelistener);
+                final String playname = "无名";
+                createMainplayer(playname, onCreateOrGetPlayerListener);
             } else {
-                BindwithServer.getInstance().getData(BindwithServer.TABLEID_PLAYER, _id, new BindwithServer.OndatasearchListener() {
+                Server.getInstance().getData(Server.TABLEID_PLAYER, _id, new Server.OndatasearchListener() {
                     @Override
                     public void success(ArrayList<Object> datas) {
 
@@ -126,10 +144,9 @@ public class PlayerManager {
                     public void success(Object object) {
                         if (object instanceof Player) {
                             Player player = ((Player) object);
-                            player.setPlayername(playname);
                             mainplayer = player;
-                            if (onPlayerManagelistener != null) {
-                                onPlayerManagelistener.OnCreateOrGetPlayerSuccess(player);
+                            if (onCreateOrGetPlayerListener != null) {
+                                onCreateOrGetPlayerListener.OnCreateOrGetPlayerSuccess(player);
                             }
                         } else {
                             try {
@@ -142,8 +159,8 @@ public class PlayerManager {
 
                     @Override
                     public void fail(String info) {
-                        if (onPlayerManagelistener != null) {
-                            onPlayerManagelistener.OnCreatePlayerFail(info);
+                        if (onCreateOrGetPlayerListener != null) {
+                            onCreateOrGetPlayerListener.OnCreatePlayerFail(info);
                         }
                     }
                 });
@@ -156,24 +173,28 @@ public class PlayerManager {
      */
     public
     @Nullable
-    RoomManage.Room getCurrentroom() {
-        if (mainplayer == null || currentroom == null)
+    RoomManage.Room getCurrentRoom() {
+        if (mainplayer == null || currentRoom == null)
             return null;
         else
-            return currentroom;
+            return currentRoom;
+    }
+
+    public void setCurrentRoom(RoomManage.Room currentRoom) {
+        this.currentRoom = currentRoom;
     }
 
     /**
      * 主玩家离开房间
      *
-     * @param onPlayerManagelistener 玩家的行为的监听器
+     * @param onEnterOrLeaveRoomListener 玩家的行为的监听器
      */
-    public void leaveRoom(final OnPlayerManagelistener onPlayerManagelistener) {
+    public void leaveRoom(final OnEnterOrLeaveRoomListener onEnterOrLeaveRoomListener) {
         //主玩家存在并且在某个房间里
-        if (mainplayer != null && currentroom != null) {
-            reverseRoomPlayerState(currentroom, mainplayer, onPlayerManagelistener);
+        if (mainplayer != null && currentRoom != null) {
+            reverseRoomPlayerState(currentRoom, mainplayer, onEnterOrLeaveRoomListener);
         } else {
-            onPlayerManagelistener.onLeaveRoomFail();
+            onEnterOrLeaveRoomListener.onLeaveRoomFail();
             try {
                 throw new Exception("already leave the room or mainplayer is not exist");
             } catch (Exception e) {
@@ -182,28 +203,27 @@ public class PlayerManager {
         }
     }
 
-
     /**
      * 将玩家与房间之间的关系反转，并且更新到服务器，然后调用监听器的对应的回调方法,若更新失败，则人和房间关系不变
      *
      * @param room
      * @param player
-     * @param onPlayerManagelistener
+     * @param onEnterOrLeaveRoomListener
      */
-    public void reverseRoomPlayerState(@NonNull final RoomManage.Room room, @NonNull final Player player, final OnPlayerManagelistener onPlayerManagelistener) {
+    public void reverseRoomPlayerState(@NonNull final RoomManage.Room room, @NonNull final Player player, final OnEnterOrLeaveRoomListener onEnterOrLeaveRoomListener) {
         final boolean finalIsInRoom = reverseRoomPlayerState(room, player);
-        BindwithServer.getInstance().updateData(room, new BindwithServer.OnUpdateDataListener() {
+        Server.getInstance().updateData(room, new Server.OnUpdateDataListener() {
             @Override
             public void success(String _id) {
-                BindwithServer.getInstance().updateData(BindwithServer.TABLEID_PLAYER, _id, "roomid", player.getRoomid(), new BindwithServer.OnUpdateDataListener() {
+                Server.getInstance().updateData(Server.TABLEID_PLAYER, _id, "roomid", player.getRoomid(), new Server.OnUpdateDataListener() {
 
                     @Override
                     public void success(String _id) {
-                        if (onPlayerManagelistener != null) {
+                        if (onEnterOrLeaveRoomListener != null) {
                             if (finalIsInRoom == true)
-                                onPlayerManagelistener.onLeaveRoomSuccess();
+                                onEnterOrLeaveRoomListener.onLeaveRoomSuccess();
                             else
-                                onPlayerManagelistener.OnEnterRoomSuccess(mainplayer);
+                                onEnterOrLeaveRoomListener.OnEnterRoomSuccess(mainplayer);
                         }
 
                     }
@@ -211,11 +231,11 @@ public class PlayerManager {
                     @Override
                     public void fail(String info) {
                         reverseRoomPlayerState(room, player);
-                        if (onPlayerManagelistener != null) {
+                        if (onEnterOrLeaveRoomListener != null) {
                             if (finalIsInRoom == true)
-                                onPlayerManagelistener.onLeaveRoomFail();
+                                onEnterOrLeaveRoomListener.onLeaveRoomFail();
                             else
-                                onPlayerManagelistener.OnEnterRoomSuccess(mainplayer);
+                                onEnterOrLeaveRoomListener.OnEnterRoomSuccess(mainplayer);
                         }
                     }
                 });
@@ -225,11 +245,11 @@ public class PlayerManager {
             @Override
             public void fail(String info) {
                 reverseRoomPlayerState(room, player);
-                if (onPlayerManagelistener != null) {
+                if (onEnterOrLeaveRoomListener != null) {
                     if (finalIsInRoom == true) {
-                        onPlayerManagelistener.onLeaveRoomFail();
+                        onEnterOrLeaveRoomListener.onLeaveRoomFail();
                     } else {
-                        onPlayerManagelistener.OnEnterRoomFail(info);
+                        onEnterOrLeaveRoomListener.OnEnterRoomFail(info);
                     }
                 }
             }
@@ -262,7 +282,7 @@ public class PlayerManager {
      *
      * @param room 要加入的房间
      */
-    public void enterRoom(final RoomManage.Room room, @Nullable final OnPlayerManagelistener onPlayerManagelistener) {
+    public void enterRoom(final RoomManage.Room room, @Nullable final OnEnterOrLeaveRoomListener onEnterOrLeaveRoomListener) {
         if (mainplayer == null || mainplayer.get_id() == null) {
             try {
                 throw new Exception("mainplayer is not exist");
@@ -272,8 +292,8 @@ public class PlayerManager {
         } else {
             //房间满人
             if (room.isfull()) {
-                if (onPlayerManagelistener != null) {
-                    onPlayerManagelistener.OnEnterRoomFail("room is full");
+                if (onEnterOrLeaveRoomListener != null) {
+                    onEnterOrLeaveRoomListener.OnEnterRoomFail("room is full");
                 }
                 return;
             }
@@ -284,20 +304,16 @@ public class PlayerManager {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-                if (onPlayerManagelistener != null) {
-                    onPlayerManagelistener.OnEnterRoomFail("already in room");
+                if (onEnterOrLeaveRoomListener != null) {
+                    onEnterOrLeaveRoomListener.OnEnterRoomFail("already in room");
                 }
             } else {
-                reverseRoomPlayerState(room, mainplayer, onPlayerManagelistener);
+                reverseRoomPlayerState(room, mainplayer, onEnterOrLeaveRoomListener);
             }
         }
     }
 
-    public interface OnPlayerManagelistener {
-        void OnCreateOrGetPlayerSuccess(@NonNull Player player);
-
-        void OnCreatePlayerFail(String info);
-
+    public interface OnEnterOrLeaveRoomListener {
         void OnEnterRoomSuccess(@NonNull Player player);
 
         void OnEnterRoomFail(String info);
@@ -306,6 +322,12 @@ public class PlayerManager {
 
         void onLeaveRoomFail();
 
+    }
+
+    public interface OnCreateOrGetPlayerListener {
+        void OnCreateOrGetPlayerSuccess(@NonNull Player player);
+
+        void OnCreatePlayerFail(String info);
     }
 
     /**
@@ -318,7 +340,7 @@ public class PlayerManager {
         private String roomid;
 
         public String get_id() {
-            return BindwithServer.getInstance().get_id(this);
+            return Server.getInstance().get_id(this);
         }
 
         public LatLng getLatLng() {
@@ -351,5 +373,18 @@ public class PlayerManager {
             else return false;
         }
 
+        /**
+         * 将主玩家角色的位置与player进行绑定，每当主玩家角色的位置改变，上传到服务器
+         */
+        public void bindMainplayerAsLocationSender() {
+            LocationSource.OnLocationChangedListener mainplayerlocationsenderlistener = new LocationSource.OnLocationChangedListener() {
+                @Override
+                public void onLocationChanged(Location location) {
+                    setLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
+                    Server.getInstance().sendPlayerLocation(Player.this);
+                }
+            };
+            LocationServiceManager.getInstance().activate(mainplayerlocationsenderlistener);
+        }
     }
 }
