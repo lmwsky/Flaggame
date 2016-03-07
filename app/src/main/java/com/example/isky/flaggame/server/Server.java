@@ -386,15 +386,16 @@ public class Server {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                 try {
-                    if (response.getInt("status") != 1)
+                    if (response.getInt("status") != 1) {
                         if (onUpdateDataListener != null) {
                             onUpdateDataListener.fail(response.getString("info"));
-                        } else {
-
-                            if (onUpdateDataListener != null) {
-                                onUpdateDataListener.success(_id);
-                            }
                         }
+                    } else {
+
+                        if (onUpdateDataListener != null) {
+                            onUpdateDataListener.success(_id);
+                        }
+                    }
                 } catch (JSONException e) {
                     e.printStackTrace();
                     if (onUpdateDataListener != null) {

@@ -182,6 +182,10 @@ public class PlayerManager {
 
     public void setCurrentRoom(RoomManage.Room currentRoom) {
         this.currentRoom = currentRoom;
+        if (currentRoom != null)
+            mainplayer.setRoomid(currentRoom.get_id());
+        else
+            mainplayer.setRoomid(null);
     }
 
     /**
@@ -215,6 +219,7 @@ public class PlayerManager {
         Server.getInstance().updateData(room, new Server.OnUpdateDataListener() {
             @Override
             public void success(String _id) {
+                Log.d("playerroomid", player.getRoomid());
                 Server.getInstance().updateData(Server.TABLEID_PLAYER, _id, "roomid", player.getRoomid(), new Server.OnUpdateDataListener() {
 
                     @Override
@@ -225,7 +230,6 @@ public class PlayerManager {
                             else
                                 onEnterOrLeaveRoomListener.OnEnterRoomSuccess(mainplayer);
                         }
-
                     }
 
                     @Override

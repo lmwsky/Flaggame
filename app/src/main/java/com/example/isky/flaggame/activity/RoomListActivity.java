@@ -109,6 +109,8 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
                 ArrayList<RoomManage.Room> roomArrayList = new ArrayList<>();
                 for (Object o : datas) {
                     RoomManage.Room room = (RoomManage.Room) o;
+                    if (room.isAbandon())
+                        continue;
                     roomArrayList.add(room);
                     Map<String, String> map = new HashMap<>();
                     map.put("roomName", room.getRoomname());

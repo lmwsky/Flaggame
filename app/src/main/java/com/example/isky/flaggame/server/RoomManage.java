@@ -124,7 +124,7 @@ public class RoomManage {
         public void abandon(Server.OnUpdateDataListener onUpdateDataListener) {
             state = ABANDON;
             Server.getInstance().updateData(Server.TABLEID_ROOM, get_id(),
-                    "state", state + "", onUpdateDataListener);
+                    this, onUpdateDataListener);
         }
 
         /**
@@ -133,7 +133,7 @@ public class RoomManage {
         public void startgame(Server.OnUpdateDataListener onUpdateDataListener) {
             state = START;
             Server.getInstance().updateData(Server.TABLEID_ROOM, get_id(),
-                    "state", state + "", onUpdateDataListener);
+                    this, onUpdateDataListener);
         }
 
 

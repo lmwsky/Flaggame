@@ -11,6 +11,7 @@ import android.widget.RadioGroup;
 import com.example.isky.flaggame.R;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.RoomManage;
+import com.example.isky.flaggame.server.Server;
 
 import java.util.ArrayList;
 
@@ -37,7 +38,7 @@ public class CreateRoomActivity extends Activity {
         bt_confirm.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                PlayerManager.Player mainplayer = PlayerManager.getInstance().getMainplayer();
+                final PlayerManager.Player mainplayer = PlayerManager.getInstance().getMainplayer();
                 if (mainplayer != null) {
 
                       /*建立房间对象*/
@@ -72,9 +73,21 @@ public class CreateRoomActivity extends Activity {
                         public void onCreateRoomSuccess(RoomManage.Room room) {
                             RoomManage.getInstance().setCreateRoom(room);
                             PlayerManager.getInstance().setCurrentRoom(room);
-                            Intent intent = new Intent();
-                            intent.setClass(CreateRoomActivity.this, RoomActivity.class);
-                            startActivity(intent);
+
+                            Server.getInstance().updateData(Server.TABLEID_PLAYER, mainplayer.get_id(), "roomid", mainplayer.getRoomid(), new Server.OnUpdateDataListener() {
+                                @Override
+                                public void success(String _id) {
+                                    Intent intent = new Intent();
+                                    intent.setClass(CreateRoomActivity.this, RoomActivity.class);
+                                    startActivity(intent);
+                                }
+
+                                @Override
+                                public void fail(String info) {
+                                    ToastUtil.show(CreateRoomActivity.this, "创建房间失败");
+                                }
+                            });
+
                         }
 
                         @Override
