@@ -1,6 +1,7 @@
 package com.example.isky.flaggame.game;
 
 import android.app.Activity;
+import android.util.Log;
 
 import com.amap.api.maps2d.AMap;
 import com.amap.api.maps2d.model.LatLng;
@@ -91,7 +92,7 @@ public class MultiPlayerGame extends GameManager {
         LocationServiceManager.getInstance().destory();
         Server.getInstance().stopReceiveGameEvent();
         Server.getInstance().stopReceivePlayerLocation();
-        SignManager.getInstance().initMap();//重新设置地图定位
+        // SignManager.getInstance().initMap();//重新设置地图定位
         SignManager.getInstance().clear();
     }
 
@@ -102,12 +103,14 @@ public class MultiPlayerGame extends GameManager {
         final RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
 
         if (room != null) {
-            room.getPlayersByRoom(new Server.OndatasearchListener() {
+            room.getPlayersInCurrentRoom(new Server.OndatasearchListener() {
                 @Override
                 public void success(ArrayList<Object> datas) {
                     /*获取了在房间里的所有玩家*/
                     ArrayList<PlayerManager.Player> allplayerlist = new ArrayList<PlayerManager.Player>();
-                    allplayerlist.add(PlayerManager.getInstance().getMainplayer());
+                    PlayerManager.Player mainplayer = PlayerManager.getInstance().getMainplayer();
+                    allplayerlist.add(mainplayer);
+
                     for (Object o : datas) {
                         PlayerManager.Player player = (PlayerManager.Player) o;
                         if (!player.get_id().equals(room.getOwner_id()))
@@ -130,6 +133,7 @@ public class MultiPlayerGame extends GameManager {
                     }
                     for (Flag flag : flags)
                         GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddFixedSignEvent(flag));
+                    GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceStartGameEvent());
 
                     Server.getInstance().startReceiveGameEvent();
 
@@ -224,23 +228,35 @@ public class MultiPlayerGame extends GameManager {
      * 以房间的普通成员的方式来初始化游戏
      */
     public void InitGameByOthers() {
+        Log.d("event", "init game by others");
         final RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
 
         if (room != null) {
-            room.getPlayersByRoom(new Server.OndatasearchListener() {
+            room.getPlayersInCurrentRoom(new Server.OndatasearchListener() {
                 @Override
                 public void success(ArrayList<Object> datas) {
+                    Log.d("event", "get data of all players");
+
                     /*获取了在房间里的所有玩家*/
                     ArrayList<PlayerManager.Player> allplayerlist = new ArrayList<>();
-                    allplayerlist.add(PlayerManager.getInstance().getMainplayer());
+                    PlayerManager.Player mainplayer = PlayerManager.getInstance().getMainplayer();
+                    allplayerlist.add(mainplayer);
+
                     for (Object o : datas) {
                         PlayerManager.Player player = (PlayerManager.Player) o;
-                        if (!player.get_id().equals(room.getOwner_id()))
-                            allplayerlist.add(player);
+                        if (player.get_id().equals(mainplayer.get_id()))
+                            continue;
+
+                        allplayerlist.add(player);
+
                     }
+                    if (mainplayer != null)
+                        Log.d("event", "mainpalyer=" + mainplayer.get_id());
+                    else
+                        Log.d("event", "mainpalyer=" + null);
+
                     SignManager.getInstance().setAllplayer(allplayerlist);
                     Server.getInstance().startReceiveGameEvent();
-
                 }
 
                 @Override

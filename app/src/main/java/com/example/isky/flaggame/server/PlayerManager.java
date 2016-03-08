@@ -216,11 +216,10 @@ public class PlayerManager {
      */
     public void reverseRoomPlayerState(@NonNull final RoomManage.Room room, @NonNull final Player player, final OnEnterOrLeaveRoomListener onEnterOrLeaveRoomListener) {
         final boolean finalIsInRoom = reverseRoomPlayerState(room, player);
-        Server.getInstance().updateData(room, new Server.OnUpdateDataListener() {
+        Server.getInstance().updateData(Server.TABLEID_ROOM, room.get_id(), room, new Server.OnUpdateDataListener() {
             @Override
             public void success(String _id) {
-                Log.d("playerroomid", player.getRoomid());
-                Server.getInstance().updateData(Server.TABLEID_PLAYER, _id, "roomid", player.getRoomid(), new Server.OnUpdateDataListener() {
+                Server.getInstance().updateData(Server.TABLEID_PLAYER, player.get_id(), "roomid", player.getRoomid(), new Server.OnUpdateDataListener() {
 
                     @Override
                     public void success(String _id) {

@@ -1,12 +1,12 @@
 package com.example.isky.flaggame.game;
 
-import android.support.annotation.Nullable;
-
 import com.example.isky.flaggame.role.FixedSign;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.Sign;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.RoomManage;
+import com.example.isky.flaggame.server.Server;
+import com.example.isky.flaggame.server._idQuery;
 import com.google.gson.Gson;
 
 /**
@@ -19,48 +19,57 @@ public class GameEventFactory {
     public static GameEvent produceAddFixedSignEvent(FixedSign fixedSign) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_ADDSIGN);
-        gameEvent.setGson(gson.toJson(fixedSign));
-        gameEvent.setGsonclassname(fixedSign.getClass().getName());
+        gameEvent.obj = fixedSign;
         return gameEvent;
     }
 
     public static GameEvent produceSwithBitMapToDie(Sign sign) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_SWITCHICONTODIE);
-        gameEvent.setGson(sign.getSignature());
-        gameEvent.setGsonclassname(String.class.getName());
+        gameEvent.obj = sign.getSignature();
+
         return gameEvent;
     }
 
+    /**
+     * 需要签名
+     *
+     * @param sign
+     * @return
+     */
     public static GameEvent produceEventMove(Sign sign) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_MOVESIGN);
-        gameEvent.setGson(sign.getSignature());
-        gameEvent.setGsonclassname(String.class.getName());
+
+        gameEvent.obj = sign.getSignature();
+
         return gameEvent;
     }
 
     public static GameEvent produceShowToast(String str) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_SHOWTOAST);
-        gameEvent.setGson(str);
-        gameEvent.setGsonclassname(String.class.getName());
+
+        gameEvent.obj = str;
+
         return gameEvent;
     }
 
     public static GameEvent produceRevomeSign(Sign sign) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_REMOVESIGN);
-        gameEvent.setGson(sign.getSignature());
-        gameEvent.setGsonclassname(String.class.getName());
+
+        gameEvent.obj = sign.getSignature();
+
         return gameEvent;
     }
 
     public static GameEvent produceSwithBitMapToLive(Sign sign) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_SWITCHICONTOLIVE);
-        gameEvent.setGson(sign.getSignature());
-        gameEvent.setGsonclassname(String.class.getName());
+
+        gameEvent.obj = sign.getSignature();
+
         return gameEvent;
     }
 
@@ -74,10 +83,11 @@ public class GameEventFactory {
     public static GameEvent produceAddRoleSign(RoleSign roleSign, String rolesignplayerid) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_ADDSIGN);
-        gameEvent.setGson(gson.toJson(roleSign));
-        gameEvent.setGsonclassname(roleSign.getClass().getName());
+
         //将rolesign对应的playerid设置为Toplayerid
         gameEvent.setToplayerid(rolesignplayerid);
+        gameEvent.obj = roleSign;
+
         return gameEvent;
     }
 
@@ -95,18 +105,18 @@ public class GameEventFactory {
 
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_ADDMAINPLAYERROLESIGN_SINGLE);
-        gameEvent.setGson(gson.toJson(roleSign));
-        gameEvent.setGsonclassname(roleSign.getClass().getName());
         //将rolesign对应的playerid设置为Toplayerid
         gameEvent.setToplayerid(rolesignplayerid);
+        gameEvent.obj = roleSign;
+
         return gameEvent;
     }
 
     public static GameEvent produceBindWalkPathAI(String rolesignsignature) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_BINDWALKPATHAI);
-        gameEvent.setGson(gson.toJson(rolesignsignature));
-        gameEvent.setGsonclassname(String.class.getName());
+        gameEvent.obj = rolesignsignature;
+
         return gameEvent;
     }
 
@@ -131,10 +141,9 @@ public class GameEventFactory {
      * Created by isky on 2016/3/4.
      * 事件类
      */
-    public static class GameEvent {
+    public static class GameEvent implements _idQuery {
+        public transient Object obj;
         private int eventtype;
-        private String gson;
-        private String gsonclassname;
         private String sourceplayerid;
         private String toplayerid;
         private String roomid;
@@ -176,26 +185,6 @@ public class GameEventFactory {
             this.eventtype = eventtype;
         }
 
-        public
-        @Nullable
-        String getGson() {
-            return gson;
-        }
-
-        public void setGson(String gson) {
-            this.gson = gson;
-        }
-
-        public
-        @Nullable
-        String getGsonclassname() {
-            return gsonclassname;
-        }
-
-        public void setGsonclassname(String gsonclassname) {
-            this.gsonclassname = gsonclassname;
-        }
-
         public String getSourceplayerid() {
             return sourceplayerid;
         }
@@ -215,6 +204,11 @@ public class GameEventFactory {
 
         public void setRoomid(String roomid) {
             this.roomid = roomid;
+        }
+
+        @Override
+        public String get_id() {
+            return Server.getInstance().get_id(this);
         }
     }
 }

@@ -10,7 +10,7 @@ import java.util.ArrayList;
  */
 public class RoomManage {
     private static RoomManage roomManage;
-    private ArrayList<Room> roomlist;
+    private ArrayList<Room> roomlist = new ArrayList<>();
     private Room createRoom;
 
     private RoomManage() {
@@ -54,8 +54,22 @@ public class RoomManage {
         return roomlist;
     }
 
-    public void setRoomlist(ArrayList<Room> roomlist) {
-        this.roomlist = roomlist;
+    public void addroomlist(ArrayList<Room> roomlist) {
+        for (Room room : roomlist)
+            addRoom(room);
+    }
+
+    private void addRoom(Room room) {
+        boolean isexist = false;
+        for (Room newroom : roomlist) {
+            if (newroom.get_id().equals(room.get_id())) {
+                isexist = true;
+                break;
+            }
+        }
+        if (isexist == false)
+            roomlist.add(room);
+
     }
 
     public Room getCreateRoom() {
@@ -107,8 +121,8 @@ public class RoomManage {
 
         public boolean isAbandon() {
             if (state == ABANDON)
-                return false;
-            else return true;
+                return true;
+            else return false;
         }
 
         /**
@@ -222,8 +236,18 @@ public class RoomManage {
         }
 
         public void addplayer(String id) {
-            otherplayersid.add(id);
+            if (id.equals(owner_id))
+                return;
+            else {
+                for (String otherid : otherplayersid) {
+                    if (otherid.equals(id))
+                        return;
+                }
+                otherplayersid.add(id);
+
+            }
         }
+
 
         public void removePlayer(String id) {
             for (int i = 0; i < otherplayersid.size(); i++) {
@@ -235,7 +259,7 @@ public class RoomManage {
         }
 
         public boolean isfull() {
-            if (needplayernum == otherplayersid.size() + 1)
+            if (needplayernum == (otherplayersid.size() + 1))
                 return true;
             else
                 return false;
@@ -246,12 +270,14 @@ public class RoomManage {
          *
          * @param ondatasearchListener
          */
-        public void getPlayersByRoom(Server.OndatasearchListener ondatasearchListener) {
-            String roomid = Server.getInstance().get_id(this);
-            if (roomid == null)
-                ondatasearchListener.fail("room is not exist");
-            else
+        public void getPlayersInCurrentRoom(Server.OndatasearchListener ondatasearchListener) {
+            Room currentRoom = PlayerManager.getInstance().getCurrentRoom();
+            if (currentRoom != null) {
+                String roomid = currentRoom.get_id();
                 Server.getInstance().getData(Server.TABLEID_PLAYER, "roomid", roomid, ondatasearchListener);
+            } else {
+                ondatasearchListener.fail("找不到当前房间");
+            }
         }
     }
 }

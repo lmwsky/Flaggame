@@ -8,19 +8,20 @@ import android.widget.BaseAdapter;
 import android.widget.TextView;
 
 import com.example.isky.flaggame.R;
+import com.example.isky.flaggame.server.RoomManage;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by x1832 on 2016/3/4.
  */
 public class MyAdapter extends BaseAdapter {
 
-    List<Map<String, String>> list;
+    List<RoomManage.Room> list;
     LayoutInflater inflater;
 
-    public MyAdapter(Context context, List<Map<String, String>> list) {
+    public MyAdapter(Context context, List<RoomManage.Room> list) {
         this.inflater = LayoutInflater.from(context);
         this.list = list;
     }
@@ -55,11 +56,11 @@ public class MyAdapter extends BaseAdapter {
         } else {
             viewHolder = (ViewHolder) convertView.getTag();
         }
+        RoomManage.Room room = list.get(position);
 
-        Map map = list.get(position);
-        viewHolder.roomName.setText((String) map.get("roomName"));
-        viewHolder.realNumber.setText((String) map.get("realNumber"));
-        viewHolder.maxNumber.setText((String) map.get("maxNumber"));
+        viewHolder.roomName.setText(room.getRoomname());
+        viewHolder.realNumber.setText(room.getPlayersnum() + "");
+        viewHolder.maxNumber.setText(room.getNeedplayernum() + "");
 
         return convertView;
     }
@@ -67,16 +68,23 @@ public class MyAdapter extends BaseAdapter {
     /**
      * 只添加尚未在列表中存在的
      *
-     * @param map
+     * @param room
      */
-    public void addData(Map<String, String> map) {
-        boolean isexist = false;
-        for (Map map1 : list) {
-            if (map1.get("roomid").equals(map.get("roomid")))
-                isexist = true;
+    public void addData(RoomManage.Room room) {
+        boolean isExist = false;
+        for (RoomManage.Room room1 : list) {
+            if (room1.get_id().equals(room)) {
+                isExist = true;
+                break;
+            }
         }
-        if (isexist == false)
-            list.add(map);
+        if (isExist == false)
+            list.add(room);
+
+    }
+
+    public void setRoomlist(ArrayList<RoomManage.Room> roomlist) {
+        this.list = roomlist;
     }
 
     public class ViewHolder {

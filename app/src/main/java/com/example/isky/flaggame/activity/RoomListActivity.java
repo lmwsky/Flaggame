@@ -11,14 +11,13 @@ import android.widget.Button;
 import android.widget.ListView;
 
 import com.example.isky.flaggame.R;
+import com.example.isky.flaggame.game.GameConfig;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.RoomManage;
 import com.example.isky.flaggame.server.Server;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import util.ToastUtil;
 
@@ -35,19 +34,25 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_roomlist);
         setView();
+        loadRoomData();
     }
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
         ArrayList<RoomManage.Room> roomlist = RoomManage.getInstance().getRoomlist();
+        Log.d("hh", "item click position:" + position);
         if (roomlist.size() - 1 >= position) {
+
             final RoomManage.Room room = roomlist.get(position);
             if (room != null) {
+                Log.d("hh", "start enter room" + room.get_id());
+
                 PlayerManager.getInstance().enterRoom(room, new PlayerManager.OnEnterOrLeaveRoomListener() {
                     @Override
                     public void OnEnterRoomSuccess(@NonNull PlayerManager.Player player) {
                         PlayerManager.getInstance().setCurrentRoom(room);
+                        Log.d("hh", "enter room belong to " + room.getOwner_id());
                         Intent intent = new Intent();
                         intent.setClass(RoomListActivity.this, RoomActivity.class);
                         startActivity(intent);
@@ -55,6 +60,7 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
 
                     @Override
                     public void OnEnterRoomFail(String info) {
+                        Log.d("hh", "start enter room fail " + info);
 
                     }
 
@@ -79,7 +85,8 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
     public void loadRoomData() {
         PlayerManager.Player mainpalyer = PlayerManager.getInstance().getMainplayer();
         if (mainpalyer != null) {
-            RoomManage.getInstance().SearchRoom(mainpalyer.getLatLng(), 4000, loaddatalistener);
+            Log.d("hhRoomList", "start load room data");
+            RoomManage.getInstance().SearchRoom(mainpalyer.getLatLng(), 14000, loaddatalistener);
         }
 
     }
@@ -99,7 +106,7 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
 
 
         ListView lv = (ListView) findViewById(R.id.lv_room);
-        final List<Map<String, String>> list = new ArrayList<>();
+        final List<RoomManage.Room> list = new ArrayList<>();
         final MyAdapter adapter = new MyAdapter(this, list);
         lv.setAdapter(adapter);
         lv.setOnItemClickListener(this);
@@ -112,18 +119,11 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
                     if (room.isAbandon())
                         continue;
                     roomArrayList.add(room);
-                    Map<String, String> map = new HashMap<>();
-                    map.put("roomName", room.getRoomname());
-                    map.put("realNumber", room.getPlayersnum() + "");
-                    map.put("maxNumber", room.getNeedplayernum() + "");
-                    map.put("roomid", room.get_id() + "");
-
-                    adapter.addData(map);
                 }
-                RoomManage.getInstance().setRoomlist(roomArrayList);
-
+                RoomManage.getInstance().addroomlist(roomArrayList);
+                Log.d("hh", "getRoonList SIZE :" + RoomManage.getInstance().getRoomlist().size());
+                adapter.setRoomlist(RoomManage.getInstance().getRoomlist());
                 adapter.notifyDataSetChanged();
-
             }
 
             @Override
@@ -149,6 +149,7 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
 
                         @Override
                         public void OnEnterRoomSuccess(@NonNull PlayerManager.Player player) {
+                            GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
                             PlayerManager.getInstance().setCurrentRoom(room);
                             Intent intent = new Intent();
                             intent.setClass(RoomListActivity.this, RoomActivity.class);

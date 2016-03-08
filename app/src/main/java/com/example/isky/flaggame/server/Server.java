@@ -1,6 +1,7 @@
 package com.example.isky.flaggame.server;
 
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.services.cloud.CloudItem;
@@ -44,31 +45,35 @@ public class Server {
     private static final long UPDATEPLAYERLOCATION_DELAY = 1100;
     private static final long DELAY_QUERY = 1000;//每1s查询一次事件
     private static Server server;
-    public String minid = "0";
     private HashMap<String, String> tablenametableidmap = new HashMap<>();//tablename 与 tableid的map
     private HashMap<Object, String> objecttableidmap = new HashMap<>();//object 与tableid的map
     private HashMap<Object, String> object_idmap = new HashMap<>();//object 与 id(在 table中)的map
-    private CloudSearch mCloudSearch;
-    private OnCloudeSearchlistener onCloudeSearchlistener;
-    private HashMap<PlayerManager.Player, Timer> playerTimerHashMap = new HashMap<>();//更新player位置的定时器
+    private HashMap<String, Timer> playeridTimerHashMap = new HashMap<>();//更新player位置的定时器
     private Timer eventQueryTimer;
     private QueryTask queryTask;
+    private Gson gson = new Gson();
+    private OnGameEventReceiveListener onGameEventReceiveListener;
 
     private Server() {
         bindTablenamewithTableid(RoomManage.Room.class.getName(), Server.TABLEID_ROOM);
         bindTablenamewithTableid(PlayerManager.Player.class.getName(), Server.TABLEID_PLAYER);
         bindTablenamewithTableid(GameEventFactory.GameEvent.class.getName(), Server.TABLEID_EVENT);
-
-        mCloudSearch = new CloudSearch(GameApplication.getApplication());
-
-        onCloudeSearchlistener = new OnCloudeSearchlistener();
-        mCloudSearch.setOnCloudSearchListener(onCloudeSearchlistener);
     }
 
     public static Server getInstance() {
         if (server == null)
             server = new Server();
         return server;
+    }
+
+    private CloudSearch getOnCloudSeach(OndatasearchListener ondatasearchListener) {
+        CloudSearch mCloudSearch = new CloudSearch(GameApplication.getApplication());
+
+        OnCloudeSearchlistener onCloudeSearchlistener = new OnCloudeSearchlistener();
+        onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
+
+        mCloudSearch.setOnCloudSearchListener(onCloudeSearchlistener);
+        return mCloudSearch;
     }
 
     public void setQueryGameEventMin_id(int min_id) {
@@ -281,24 +286,22 @@ public class Server {
      * @param _id     data的id
      */
     public void getData(String tableid, String _id, final OndatasearchListener ondatasearchListener) {
-        onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
-        mCloudSearch.searchCloudDetailAsyn(tableid, _id);
+
+        getOnCloudSeach(ondatasearchListener).searchCloudDetailAsyn(tableid, _id);
     }
 
 
     public void getData(String tableid, String key, String keyValue, final OndatasearchListener ondatasearchListener) {
-        onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
-
         CloudSearch.Query mQuery = null;
         CloudSearch.SearchBound bound = new CloudSearch.SearchBound("全国");
         try {
             mQuery = new CloudSearch.Query(tableid, null, bound);
             mQuery.addFilterString(key, keyValue);
-            mQuery.setPageSize(10);
+            mQuery.setPageSize(100);
             CloudSearch.Sortingrules sorting = new CloudSearch.Sortingrules(
                     "_id", false);
             mQuery.setSortingrules(sorting);
-            mCloudSearch.searchCloudAsyn(mQuery);// 异步搜索
+            getOnCloudSeach(ondatasearchListener).searchCloudAsyn(mQuery);// 异步搜索
         } catch (AMapException e) {
             e.printStackTrace();
         }
@@ -314,18 +317,19 @@ public class Server {
      * @param ondatasearchListener
      */
     public void getData(String tableid, LatLng latlng, int radius, final OndatasearchListener ondatasearchListener) {
-        onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
+
         CloudSearch.SearchBound bound = new CloudSearch.SearchBound(new LatLonPoint(
                 latlng.latitude, latlng.longitude), radius);
 
         CloudSearch.Query mQuery = null;
         try {
             mQuery = new CloudSearch.Query(tableid, null, bound);
-            mQuery.setPageSize(10);
+            mQuery.setPageSize(100);
             CloudSearch.Sortingrules sorting = new CloudSearch.Sortingrules(
                     "_id", false);
             mQuery.setSortingrules(sorting);
-            mCloudSearch.searchCloudAsyn(mQuery);// 异步搜索
+            getOnCloudSeach(ondatasearchListener)
+                    .searchCloudAsyn(mQuery);// 异步搜索
         } catch (AMapException e) {
             e.printStackTrace();
         }
@@ -338,8 +342,6 @@ public class Server {
     }
 
     public void getDatabyid(String tableid, int minid, int maxid, @Nullable String key, @Nullable String keyvalue, final OndatasearchListener ondatasearchListener) {
-        onCloudeSearchlistener.setOndatasearchListener(ondatasearchListener);
-
         CloudSearch.Query mQuery = null;
         CloudSearch.SearchBound bound = new CloudSearch.SearchBound("全国");
         try {
@@ -347,15 +349,15 @@ public class Server {
             mQuery.addFilterNum("_id", minid + "", maxid + "");
             if (key != null && keyvalue != null)
                 mQuery.addFilterString(key, keyvalue);
-            mQuery.setPageSize(10);
+            mQuery.setPageSize(100);
             CloudSearch.Sortingrules sorting = new CloudSearch.Sortingrules(
                     "_id", false);
             mQuery.setSortingrules(sorting);
-            mCloudSearch.searchCloudAsyn(mQuery);// 异步搜索
+            getOnCloudSeach(ondatasearchListener)
+                    .searchCloudAsyn(mQuery);// 异步搜索
         } catch (AMapException e) {
             e.printStackTrace();
         }
-
     }
 
     /**
@@ -379,6 +381,7 @@ public class Server {
     }
 
     public void updateData(String tableid, final String _id, String updatekey, String updatevalue, @Nullable final OnUpdateDataListener onUpdateDataListener) {
+
         RequestJsonFactory requestJsonFactory = new RequestJsonFactory()._id(_id).customerValue(updatekey, updatevalue);
         RequestParamsFactory requestParamsFactory = new RequestParamsFactory();
         requestParamsFactory.tableid(tableid).data(requestJsonFactory);
@@ -421,37 +424,30 @@ public class Server {
         updateData(tableid, _id, "gson", gsonstr, onUpdateDataListener);
     }
 
-    public <T> void updateData(T updateObject, @Nullable final OnUpdateDataListener onUpdateDataListener) {
-        String tableid = objecttableidmap.get(updateObject);
-        String _id = object_idmap.get(updateObject);
-        Gson gson = new Gson();
-        String gsonstr = gson.toJson(updateObject);
-        updateData(tableid, _id, "gson", gsonstr, onUpdateDataListener);
-    }
-
     public void sendPlayerLocation(PlayerManager.Player player) {
+        Log.d("hh", "send player location " + JsonUtil.get_locationstr(player.getLatLng()));
         updateData(TABLEID_PLAYER, player.get_id(), "_location", JsonUtil.get_locationstr(player.getLatLng()), null);
     }
 
     /**
      * 开始定时任务，每隔一段时间就从服务器获取位置来更新player的位置，以及和player绑定的rolesign的位置
      *
-     * @param player
+     * @param playerid
      */
-    public void startReceivePlayerLocation(final PlayerManager.Player player) {
-        final String _id = player.get_id();
-        if (_id == null) {
+    public void startReceivePlayerLocation(final String playerid) {
+        PlayerManager.Player player = SignManager.getInstance().getPlayerByPlayerid(playerid);
+        if (playerid == null) {
             try {
                 throw new Exception("player id is not exist!");
             } catch (Exception e) {
                 e.printStackTrace();
             }
         } else {
-            Timer timer = playerTimerHashMap.get(player);
+            Timer timer = playeridTimerHashMap.get(player);
             TimerTask task = new TimerTask() {
                 @Override
                 public void run() {
-                    getData(TABLEID_PLAYER, _id, new OndatasearchListener() {
+                    getData(TABLEID_PLAYER, playerid, new OndatasearchListener() {
                         @Override
                         public void success(ArrayList<Object> datas) {
 
@@ -459,9 +455,10 @@ public class Server {
 
                         @Override
                         public void success(Object object) {
+                            PlayerManager.Player player = SignManager.getInstance().getPlayerByPlayerid(playerid);
                             LatLng latlng = ((PlayerManager.Player) object).getLatLng();
                             player.setLatLng(latlng);
-                            RoleSign rolesign = SignManager.getInstance().getBindingRolesignByPlayer(player);
+                            RoleSign rolesign = SignManager.getInstance().getBindingRolesignByPlayerid(playerid);
                             if (rolesign == null)
                                 try {
                                     throw new Exception("unbind the player with rolesign");
@@ -481,39 +478,34 @@ public class Server {
             };
             if (timer == null) {
                 timer = new Timer();
-                playerTimerHashMap.put(player, timer);
+                playeridTimerHashMap.put(playerid, timer);
             } else {
                 timer.cancel();
+                timer = new Timer();
             }
             //开启移动的更新定时器
             timer.schedule(task, 0, UPDATEPLAYERLOCATION_DELAY);
         }
     }
 
-    public void stopReceivePlayerLocation(final PlayerManager.Player player) {
-        Timer timer = playerTimerHashMap.get(player);
-        if (timer == null) {
-            try {
-                throw new Exception("timer is not exist");
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else
-            timer.cancel();
-    }
 
     /**
      * 开始从服务器接收事件信息，并且将接收到的事件信息转发给GameHandle进行处理
      */
     public void startReceiveGameEvent() {
-        //接受事件
-        startReceiveGameEvent(0 + "", new Server.OnGameEventReceiveListener() {
+        onGameEventReceiveListener = new Server.OnGameEventReceiveListener() {
             @Override
-            public void OnReceiveEvent(ArrayList<Object> gameEventlsit) {
-                for (Object gameevent : gameEventlsit)
-                    GameHandler.doGameEventFromServer((GameEventFactory.GameEvent) gameevent);
+            public void OnReceiveEvent(ArrayList<GameEventFactory.GameEvent> gameEventlsit) {
+                for (GameEventFactory.GameEvent gameevent : gameEventlsit) {
+                    Log.d("event", "start do event from server");
+                    GameHandler.doGameEventFromServer(gameevent);
+
+                }
             }
-        });
+        };
+        Log.d("event", "start receive game event");
+        //接受事件
+        startReceiveGameEvent(0 + "");
     }
 
     /**
@@ -521,10 +513,10 @@ public class Server {
      *
      * @param startid
      */
-    private void startReceiveGameEvent(String startid, OnGameEventReceiveListener onGameEventReceiveListener) {
+    private void startReceiveGameEvent(String startid) {
         eventQueryTimer = new Timer();
 
-        queryTask = new QueryTask(onGameEventReceiveListener);
+        queryTask = new QueryTask();
         queryTask.setMin_id(Integer.parseInt(startid));
         eventQueryTimer.schedule(queryTask, 0, DELAY_QUERY);
     }
@@ -533,13 +525,17 @@ public class Server {
      * 停止从服务器接收游戏事件
      */
     public void stopReceiveGameEvent() {
-        eventQueryTimer.cancel();
+        if (eventQueryTimer != null)
+            eventQueryTimer.cancel();
         eventQueryTimer = null;
     }
 
     public void stopReceivePlayerLocation() {
-        for (Timer timer : playerTimerHashMap.values())
-            timer.cancel();
+        for (Timer timer : playeridTimerHashMap.values()) {
+            if (timer != null)
+                timer.cancel();
+
+        }
     }
 
     /**
@@ -590,7 +586,7 @@ public class Server {
      * 游戏事件的监听器
      */
     public interface OnGameEventReceiveListener {
-        void OnReceiveEvent(ArrayList<Object> gameEventlsit);
+        void OnReceiveEvent(ArrayList<GameEventFactory.GameEvent> gameEventlsit);
     }
 
     private class OnCloudeSearchlistener implements CloudSearch.OnCloudSearchListener {
@@ -604,28 +600,70 @@ public class Server {
         public void onCloudSearched(CloudResult cloudResult, int errorCode) {
             if (errorCode == 0 && cloudResult != null) {
                 ArrayList<CloudItem> clouditems = cloudResult.getClouds();
-                ArrayList<Object> datas = new ArrayList<>();
-                if (cloudResult.getTotalCount() == 0) {
-                    ondatasearchListener.success(datas);
-                } else {
-                    String classname = clouditems.get(0).getCustomfield().get("clss");
-                    try {
-                        Class clss = Class.forName(classname);
 
-                        Gson gson = new Gson();
-                        for (CloudItem clouditem : clouditems) {
-                            Object item = gson.fromJson(clouditem.getCustomfield().get("gson"), clss);
-                            object_idmap.put(item, clouditem.getID());//将id映射保存到_idmap
-                            datas.add(item);
-                            ondatasearchListener.success(datas);
+                ArrayList<Object> datas = new ArrayList<>();
+
+                Log.d("event", "query event cloudResult.getTotalCount()" + cloudResult.getTotalCount());
+
+                if (cloudResult.getTotalCount() == 0) {
+                    if (ondatasearchListener != null)
+                        ondatasearchListener.success(datas);
+                } else {
+
+                    String eventtype = clouditems.get(0).getCustomfield().get("eventtype");
+                    Log.d("event", "" +
+                            " eventtype=" + eventtype);
+
+                    //gameevent 特殊处理
+                    if (eventtype != null && !"".equals(eventtype)) {
+                        Log.d("event", "return data search event");
+                        ArrayList<GameEventFactory.GameEvent> loadgameevent = new ArrayList<>();
+                        for (CloudItem item : clouditems) {
+                            try {
+                                GameEventFactory.GameEvent gameEvent = new GameEventFactory.GameEvent();
+                                gameEvent.setRoomid(item.getCustomfield().get("roomid"));
+                                gameEvent.setSourceplayerid(item.getCustomfield().get("sourceplayerid"));
+                                gameEvent.setToplayerid(item.getCustomfield().get("toplayerid"));
+                                gameEvent.setEventtype(Integer.parseInt(item.getCustomfield().get("eventtype")));
+
+                                String classname = item.getCustomfield().get("clss");
+                                if (classname != null && !"".equals(classname)) {
+                                    Class clss = Class.forName(classname);
+                                    gameEvent.obj = gson.fromJson(item.getCustomfield().get("gson"), clss);
+                                    object_idmap.put(gameEvent, item.getID());//将id映射保存到_idmap
+                                }
+
+                                loadgameevent.add(gameEvent);
+                                queryTask.setMin_id(Integer.parseInt(item.getID()));
+                            } catch (ClassNotFoundException e) {
+                                e.printStackTrace();
+                            }
+
                         }
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
+                        onGameEventReceiveListener.OnReceiveEvent(loadgameevent);
+                    } else {
+                        try {
+                            String classname = clouditems.get(0).getCustomfield().get("clss");
+                            Class clss = Class.forName(classname);
+
+                            Gson gson = new Gson();
+                            for (CloudItem clouditem : clouditems) {
+                                Log.d("lmw gson", clouditem.getCustomfield().get("gson"));
+                                Object item = gson.fromJson(clouditem.getCustomfield().get("gson"), clss);
+                                object_idmap.put(item, clouditem.getID());//将id映射保存到_idmap
+                                datas.add(item);
+                            }
+                            ondatasearchListener.success(datas);
+                        } catch (ClassNotFoundException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             } else {
-                if (ondatasearchListener != null)
+                if (ondatasearchListener != null) {
                     ondatasearchListener.fail(errorCode + "");
+                    Log.d("event", "search data error " + errorCode);
+                }
             }
         }
 
@@ -654,19 +692,14 @@ public class Server {
     }
 
     public class QueryTask extends TimerTask {
-        private final OnGameEventReceiveListener onGameEventReceiveListener;
         private int min_id = 0;
         private String roomid;
 
-        public QueryTask(OnGameEventReceiveListener onGameEventReceiveListener) {
-            this.onGameEventReceiveListener = onGameEventReceiveListener;
+
+        public QueryTask() {
             RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
             if (room != null)
                 roomid = room.get_id();
-        }
-
-        public int getMin_id() {
-            return min_id;
         }
 
         public void setMin_id(int min_id) {
@@ -674,34 +707,12 @@ public class Server {
                 this.min_id = min_id;
         }
 
+
         @Override
         public void run() {
             if (roomid != null) {
-                Server.getInstance().getDatabyid(TABLEID_EVENT, min_id, Integer.MAX_VALUE, "roomid", roomid, new OndatasearchListener() {
-                    @Override
-                    public void success(ArrayList<Object> datas) {
-                        int size = datas.size();
-                        if (size > 0) {
-                            //让下一次查询不会查询已经查询过的事件
-                            Object lastobject = datas.get(size - 1);
-                            String max_id = get_id(lastobject);
-                            int team = Integer.parseInt(max_id);
-                            min_id = team + 1;
-                            if (lastobject instanceof GameEventFactory.GameEvent)
-                                onGameEventReceiveListener.OnReceiveEvent(datas);
-                        }
-                    }
-
-                    @Override
-                    public void success(Object object) {
-
-                    }
-
-                    @Override
-                    public void fail(String info) {
-
-                    }
-                });
+                Log.d("event", "query event roomid=" + roomid + "   min_id=" + min_id);
+                Server.getInstance().getDatabyid(TABLEID_EVENT, min_id, Integer.MAX_VALUE, "roomid", roomid, null);
             }
         }
     }

@@ -97,6 +97,8 @@ public class GameHandler extends Handler {
     static public void doGameEventInLocal(GameEventFactory.GameEvent gameEvent) {
         Message message = new Message();
         message.what = gameEvent.getEventtype();
+        if (message.what == MSG_ADDSIGN)
+            message.what = MSG_ADDSIGN_SINGLE;
         message.obj = gameEvent;
         if (handler != null)
             handler.sendMessage(message);
@@ -123,7 +125,7 @@ public class GameHandler extends Handler {
         if (handler != null) {
             handler.sendMessage(message);
             if (GameConfig.gametype == GameConfig.GAMETYPE_MULTIPLAYER)
-                sendGameEvent(gameEvent, onSendGameEventToServerListener);
+                sendGameEventToServer(gameEvent, onSendGameEventToServerListener);
         }
     }
 
@@ -136,10 +138,16 @@ public class GameHandler extends Handler {
         if (!gameEvent.getSourceplayerid().equals(PlayerManager.getInstance().getMainplayer().get_id())) {
             Message message = new Message();
             message.what = gameEvent.getEventtype();
+            if (message.what == MSG_ADDSIGN)
+                message.what = MSG_ADDSIGN_MULTI;
+
             message.obj = gameEvent;
             if (handler != null) {
+                Log.d("event", "send server event to handler=" + gameEvent.get_id());
                 handler.sendMessage(message);
             }
+        } else {
+            Log.d("event", "event send from self " + gameEvent.get_id());
         }
     }
 
@@ -149,7 +157,7 @@ public class GameHandler extends Handler {
      * @param gameEvent            游戏事件
      * @param onCreateDataListener 发送游戏事件后的监听器
      */
-    public static void sendGameEvent(GameEventFactory.GameEvent gameEvent, Server.OnCreateDataListener onCreateDataListener) {
+    public static void sendGameEventToServer(GameEventFactory.GameEvent gameEvent, Server.OnCreateDataListener onCreateDataListener) {
         Server.getInstance().createData(gameEvent, onCreateDataListener);
     }
 
@@ -158,15 +166,8 @@ public class GameHandler extends Handler {
     public void handleMessage(Message msg) {
         // TODO 接收消息并且去更新UI线程上地图的内容，添加更多的事件类型
 
-        Object gsonObject = null;
         GameEventFactory.GameEvent gameEvent = (GameEventFactory.GameEvent) (msg.obj);
-        try {
-            String gson = gameEvent.getGson();
-            if (gson != null)
-                gsonObject = this.gson.fromJson(gson, Class.forName(gameEvent.getGsonclassname()));
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
-        }
+        Object gsonObject = gameEvent.obj;
         switch (msg.what) {
             case MSG_ADDMAINPLAYERROLESIGN_SINGLE: {
                 RoleSign mainplayer = (RoleSign) gsonObject;
@@ -188,10 +189,13 @@ public class GameHandler extends Handler {
             }
             break;
             case MSG_ADDSIGN_MULTI: {
+                Log.d("event addsign", "prepare add sign to map " + gameEvent.get_id());
                 //添加标记，并且要添加对应的监听器
                 //如果主玩家id与gameevent的Topalyerid一致，说明这个要添加的rolesign是主玩家
                 PlayerManager.Player mainplayer = PlayerManager.getInstance().getMainplayer();
                 if (mainplayer != null && mainplayer.get_id().equals(gameEvent.getToplayerid())) {
+                    Log.d("event addsign", "mainsign " + gameEvent.get_id());
+
                     RoleSign mainpalyerrolesign = (RoleSign) gsonObject;
                     SignManager.getInstance().addMainPlayerToMap(mainpalyerrolesign);
                     mainpalyerrolesign.addOnSignListener(GameManager.onSinglePlayerMainPlayerlistener);
@@ -202,18 +206,23 @@ public class GameHandler extends Handler {
                     //添加监听器
                     SignManager.getInstance().bindRoleSignWithPlayerid(mainpalyerrolesign.getSignature(), mainplayer.get_id());
                 } else {
-                    SignManager.getInstance().addSignToMap(((Sign) gsonObject));
+                    Log.d("event addsign", "mainsign " + gameEvent.get_id());
                     Sign sign = (Sign) gsonObject;
-                    if (gsonObject instanceof FixedSign)
+
+                    SignManager.getInstance().addSignToMap(sign);
+                    if (gsonObject instanceof FixedSign) {
                         sign.addOnSignListener(GameManager.onFixedSignListener);
-                    else
+                        Log.d("event addsign", " add FixedSign " + gameEvent.get_id());
+
+
+                    } else
                         sign.addOnSignListener(GameManager.onOtherRolesignlistener);
 
                     if (sign instanceof RoleSign) {
                         //绑定rolesign为player的位置接收者，当player的位置改变时，rolesign也发生变化
                         SignManager.getInstance().bindRoleSignWithPlayerid(sign.getSignature(), gameEvent.getToplayerid());
                         //player开始和服务器端进行同步
-                        Server.getInstance().startReceivePlayerLocation(SignManager.getInstance().getPlayerByPlayerid(gameEvent.getToplayerid()));
+                        Server.getInstance().startReceivePlayerLocation(gameEvent.getToplayerid());
                     }
 
                 }

@@ -32,6 +32,7 @@ public class RoomActivity extends Activity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.room);
         setView();
+        GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
     }
 
     /**
@@ -69,10 +70,16 @@ public class RoomActivity extends Activity {
         TimerTask getPlayersTimerTask = new TimerTask() {
             @Override
             public void run() {
-                currentRoom.getPlayersByRoom(new Server.OndatasearchListener() {
+                currentRoom.getPlayersInCurrentRoom(new Server.OndatasearchListener() {
                     @Override
                     public void success(ArrayList<Object> datas) {
+                        Log.d(RoomActivity.class.getName(), "in this players=" + datas.size());
                         adapter.setPlayerlist(datas);
+                        for (Object o : datas) {
+                            PlayerManager.Player player = (PlayerManager.Player) o;
+                            PlayerManager.getInstance().getCurrentRoom().addplayer(player.get_id());
+
+                        }
                         adapter.notifyDataSetChanged();
                     }
 
@@ -95,13 +102,19 @@ public class RoomActivity extends Activity {
         bt_startgame.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                getPlayerTimer.cancel();
+                final RoomManage.Room currentRoom = PlayerManager.getInstance().getCurrentRoom();
+
                 /*房主有责任通知其他游戏已经，通过修改房间状态*/
                 if (currentRoom.getOwner_id().equals(mainplayer.get_id())) {
+                    if (currentRoom.isfull() == false) {
+                        ToastUtil.show(RoomActivity.this, "房间未满~");
+                        return;
+                    }
                     currentRoom.startgame(
                             new Server.OnUpdateDataListener() {
                                 @Override
                                 public void success(String _id) {
+                                    getPlayerTimer.cancel();
                                     Intent intent = new Intent();
                                     intent.setClass(RoomActivity.this, MapActivity.class);
                                     GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
@@ -115,7 +128,10 @@ public class RoomActivity extends Activity {
                                 }
                             });
                 } else {
-                    currentRoom.setState(RoomManage.Room.START);
+                    if (currentRoom.isStarting() == false) {
+                        ToastUtil.show(RoomActivity.this, "只有房主能够开始游戏~");
+                        return;
+                    }
                     Intent intent = new Intent();
                     intent.setClass(RoomActivity.this, MapActivity.class);
                     GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
@@ -141,6 +157,8 @@ public class RoomActivity extends Activity {
                         RoomManage.Room newRoom = (RoomManage.Room) object;
                         if (newRoom.isStarting()) {
                             getRoomstateTimer.cancel();
+
+                            PlayerManager.getInstance().getCurrentRoom().setState(RoomManage.Room.START);
                             bt_startgame.callOnClick();
                         }
                     }
@@ -164,6 +182,8 @@ public class RoomActivity extends Activity {
                     currentRoom.abandon(new Server.OnUpdateDataListener() {
                         @Override
                         public void success(String _id) {
+                            getRoomstateTimer.cancel();
+                            getPlayerTimer.cancel();
                             PlayerManager.getInstance().setCurrentRoom(null);
                             RoomActivity.this.finish();
                             Log.d("hhh", "leave room sucess");
@@ -189,6 +209,8 @@ public class RoomActivity extends Activity {
 
                         @Override
                         public void onLeaveRoomSuccess() {
+                            getRoomstateTimer.cancel();
+                            getPlayerTimer.cancel();
                             PlayerManager.getInstance().setCurrentRoom(null);
                             Intent intent = new Intent(RoomActivity.this, MainActivity.class);
                             startActivity(intent);

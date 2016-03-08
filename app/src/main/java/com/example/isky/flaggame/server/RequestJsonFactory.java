@@ -2,6 +2,7 @@ package com.example.isky.flaggame.server;
 
 import android.util.Log;
 
+import com.example.isky.flaggame.game.GameEventFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -90,6 +91,34 @@ public class RequestJsonFactory {
     }
 
     /**
+     * 将一个gameevent对象加入json
+     *
+     * @param gameEvent
+     * @return
+     */
+    public RequestJsonFactory gameevent(GameEventFactory.GameEvent gameEvent) {
+        /*特殊处理，将其变为自定义属性*/
+
+        RequestJsonFactory requestJsonFactory = this;
+
+        requestJsonFactory = requestJsonFactory.customerValue("roomid", PlayerManager.getInstance().getCurrentRoom().get_id())
+                .customerValue("eventtype", gameEvent.getEventtype() + "")
+                .customerValue("sourceplayerid", gameEvent.getSourceplayerid())
+                .customerValue("toplayerid", gameEvent.getToplayerid())
+                ._location(0, 0);
+        if (gameEvent.obj != null) {
+            Gson gson = new Gson();
+            requestJsonFactory = requestJsonFactory.customerValue("gson", gson.toJson(gameEvent.obj))
+                    .customerValue("clss", gameEvent.obj.getClass().getName());
+        } else
+            requestJsonFactory = requestJsonFactory.customerValue("clss", null)
+                    .customerValue("gson", null);
+
+        Log.i("hh json", requestJsonFactory.getJsonstr());
+        return requestJsonFactory;
+    }
+
+    /**
      * 将一个对象加入传输的JSON中，即自动转化为gson的字符串，并且同时上传类名
      *
      * @param object
@@ -97,6 +126,8 @@ public class RequestJsonFactory {
      * @return
      */
     public <T> RequestJsonFactory object(T object) {
+        if (object instanceof GameEventFactory.GameEvent)
+            return gameevent((GameEventFactory.GameEvent) object);
 //
         Gson gson = new Gson();
         JsonElement objectjsonElement = gson.toJsonTree(object);
@@ -110,8 +141,6 @@ public class RequestJsonFactory {
             _location(latitude.getAsDouble(), longitude.getAsDouble());
         } else
             _location(0.0, 0.0);
-
-
         RequestJsonFactory requestJsonFactory = customerValue("clss", object.getClass().getName()).gson(objectjsonElement);
          /*特殊处理，将其变为自定义属性*/
         if (jsonObject.has("roomid")) {
@@ -121,6 +150,7 @@ public class RequestJsonFactory {
         Log.i("hh json", requestJsonFactory.getJsonstr());
         return requestJsonFactory;
     }
+
 
     /**
      * 自定义字段以及其值得添加

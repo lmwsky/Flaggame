@@ -434,8 +434,8 @@ public class SignManager {
         playeridRoleSignsignatureHashMap.put(playerid, roleSignsignature);
     }
 
-    public RoleSign getBindingRolesignByPlayer(PlayerManager.Player player) {
-        Sign sign = SignManager.getInstance().getSignBySignature(playeridRoleSignsignatureHashMap.get(player.get_id()));
+    public RoleSign getBindingRolesignByPlayerid(String playerid) {
+        Sign sign = SignManager.getInstance().getSignBySignature(playeridRoleSignsignatureHashMap.get(playerid));
         if (sign != null)
             return (RoleSign) sign;
         else

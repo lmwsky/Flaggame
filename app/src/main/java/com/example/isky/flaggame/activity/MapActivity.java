@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 import android.widget.ImageView;
@@ -38,6 +39,7 @@ public class MapActivity extends Activity {
         mapView = (MapView) findViewById(R.id.map);
         mapView.onCreate(savedInstanceState);// 必须要写
         aMap = mapView.getMap();
+        SignManager.getInstance().setaMap(aMap);
         setViewAndListener(this);
 
         if (GameConfig.gametype == GameConfig.GAMETYPE_SINGLEGAME)
@@ -149,5 +151,16 @@ public class MapActivity extends Activity {
                 .attachTo(actionButton)
                 .build();
 
+    }
+
+    /**
+     * 拦截activity 的后退键处理
+     */
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 }
