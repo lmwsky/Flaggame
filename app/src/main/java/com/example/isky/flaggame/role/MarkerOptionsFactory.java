@@ -20,7 +20,7 @@ public class MarkerOptionsFactory {
     public static MarkerOptions produceBySign(Sign sign) {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.icon(sign.getIcon())
-                .position(sign.getLatLng()).title(sign.getName()).visible(true);
+                .position(sign.getLatLng()).title(sign.getName()).visible(true).anchor(0.5f, 0.7f);
         return markerOptions;
     }
 

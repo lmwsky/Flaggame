@@ -1,10 +1,12 @@
 package com.example.isky.flaggame.role;
 
 import com.amap.api.maps2d.model.LatLng;
+import com.example.isky.flaggame.R;
 import com.example.isky.flaggame.game.GameConfig;
 
 import java.util.ArrayList;
 
+import util.GameApplication;
 import util.RandUtil;
 
 /**
@@ -38,7 +40,6 @@ public class SignFactory {
      */
     public static Monster produceMonster(LatLng center, double radius) {
         Monster monster = new Monster(RandUtil.randPointerOnCircle(center, radius));
-        monster.setIcon(GameConfig.BITMAP_MONSTER);
         monster.setName("怪物");
         return monster;
     }
@@ -94,7 +95,6 @@ public class SignFactory {
     public static Miner produceMiner(LatLng latLng, int team) {
         Miner miner = new Miner(team);
         miner.setLatLng(latLng);
-        miner.setIcon(GameConfig.BITMAP_MINER);
         miner.setName("布雷者");
         return miner;
     }
@@ -102,7 +102,6 @@ public class SignFactory {
     public static Sapper produceSapper(LatLng latLng, int team) {
         Sapper sapper = new Sapper(team);
         sapper.setLatLng(latLng);
-        sapper.setIcon(GameConfig.BITMAP_SAPPER);
         sapper.setName("扫雷者");
         return sapper;
     }
@@ -110,16 +109,14 @@ public class SignFactory {
     public static Scout produceScout(LatLng latLng, int team) {
         Scout scout = new Scout(team);
         scout.setLatLng(latLng);
-        scout.setIcon(GameConfig.BITMAP_SCOUT);
         scout.setName("侦查兵");
         return scout;
     }
 
     public static Flag produceFlag(LatLng latLng, int team) {
         Flag flag = new Flag(latLng);
-        flag.setIcon(GameConfig.BITMAP_FLAG);
         flag.setTeam(team);
-        flag.setName("旗帜");
+        flag.setName(GameApplication.getApplication().getString(R.string.signname_flag));
         return flag;
     }
 }

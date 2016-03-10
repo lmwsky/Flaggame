@@ -99,8 +99,7 @@ public class RoomManage {
         private int state = PREPARE;
         private LatLng latLng;//房间建立的经纬度
         private String roomname;//房间名
-        private int playersnum = 1;//玩家数目
-        private int needplayernum = 4;//需要玩家数目
+        private int needplayernum = 2;//需要玩家数目
         private String owner_name;//房主的名字
         private String owner_id;//房主的名字
         private ArrayList<String> otherplayersid;//其他玩家的_id
@@ -155,9 +154,6 @@ public class RoomManage {
             return otherplayersid.size() + 1;
         }
 
-        public void setPlayersnum(int playersnum) {
-            this.playersnum = playersnum;
-        }
 
         public String getOwner_id() {
             return owner_id;
@@ -235,6 +231,19 @@ public class RoomManage {
             return false;
         }
 
+
+        public void setALLplayerlist(ArrayList<PlayerManager.Player> players) {
+            ArrayList<String> id = new ArrayList<>();
+            for (PlayerManager.Player player : players) {
+                if (player.get_id().equals(owner_id))
+                    continue;
+                else {
+                    id.add(player.get_id());
+                }
+            }
+            this.otherplayersid = id;
+        }
+
         public void addplayer(String id) {
             if (id.equals(owner_id))
                 return;
@@ -268,7 +277,7 @@ public class RoomManage {
         /**
          * 获取某个房间里的所有玩家的对象
          *
-         * @param ondatasearchListener
+         * @param ondatasearchListener 查询数据的监听器
          */
         public void getPlayersInCurrentRoom(Server.OndatasearchListener ondatasearchListener) {
             Room currentRoom = PlayerManager.getInstance().getCurrentRoom();

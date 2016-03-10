@@ -54,7 +54,7 @@ public class RoomActivity extends Activity {
         TextView tv_room_name = (TextView) (findViewById(R.id.tv_room_name));
         tv_room_name.setText(currentRoom.getRoomname());
 
-        TextView tv_real_number = (TextView) (findViewById(R.id.tv_real_number));
+        final TextView tv_real_number = (TextView) (findViewById(R.id.tv_real_number));
         tv_real_number.setText(currentRoom.getPlayersnum() + "");
 
         TextView tv_max_number = (TextView) (findViewById(R.id.tv_max_number));
@@ -73,13 +73,15 @@ public class RoomActivity extends Activity {
                 currentRoom.getPlayersInCurrentRoom(new Server.OndatasearchListener() {
                     @Override
                     public void success(ArrayList<Object> datas) {
-                        Log.d(RoomActivity.class.getName(), "in this players=" + datas.size());
+                        ArrayList<PlayerManager.Player> playerArrayList = new ArrayList<PlayerManager.Player>();
                         adapter.setPlayerlist(datas);
                         for (Object o : datas) {
                             PlayerManager.Player player = (PlayerManager.Player) o;
-                            PlayerManager.getInstance().getCurrentRoom().addplayer(player.get_id());
-
+                            playerArrayList.add(player);
                         }
+                        PlayerManager.getInstance().getCurrentRoom().setALLplayerlist(playerArrayList);
+
+                        tv_real_number.setText(datas.size() + "");
                         adapter.notifyDataSetChanged();
                     }
 

@@ -1,5 +1,6 @@
 package com.example.isky.flaggame.role;
 
+import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.example.isky.flaggame.game.GameConfig;
 
 import java.util.ArrayList;
@@ -13,17 +14,20 @@ import util.GetScore;
 public class Sapper extends RoleSign {
 
     public Sapper() {
-        setDist_attract(GameConfig.DIST_ATTRACT_SAPPER);
-        setDist_investigate(GameConfig.DIST_INVESTIGATE_SAPPER);
-        setIcon(GameConfig.BITMAP_SAPPER);
-
+        this(0);
     }
 
     public Sapper(int team) {
         setTeam(team);
         setDist_attract(GameConfig.DIST_ATTRACT_SAPPER);
         setDist_investigate(GameConfig.DIST_INVESTIGATE_SAPPER);
-        setIcon(GameConfig.BITMAP_SAPPER);
+
+    }
+
+    @Override
+    public void setTeam(int team) {
+        super.setTeam(team);
+        setIcon(BitmapDescriptorFactory.fromResource(GameConfig.BITMAP_SAPPER[team % 3]));
 
     }
 

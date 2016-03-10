@@ -9,7 +9,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.example.isky.flaggame.R;
 import com.example.isky.flaggame.game.GameConfig;
@@ -23,6 +22,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mainmenu);
+        GameConfig.initBitmap();
         if (PlayerManager.getInstance().isPlayerRegister()) {
             PlayerManager.getInstance().getMainplayer(new PlayerManager.OnCreateOrGetPlayerListener() {
                 @Override
@@ -36,7 +36,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 @Override
                 public void OnCreatePlayerFail(String info) {
-                    ToastUtil.show(MainActivity.this, "获取用户失败，无法多人游戏");
+                    ToastUtil.show(MainActivity.this, getString(R.string.fail_getplayer));
                     MainActivity.this.setView();
                 }
             });
@@ -59,17 +59,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             case R.id.bt_multi: {
                 Intent intent = new Intent();
                 intent.setClass(this, RoomListActivity.class);
+                GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
+
                 startActivity(intent);
             }
             break;
             case R.id.bt_about:
-                Toast.makeText(this, "关于", Toast.LENGTH_SHORT).show();
+                ToastUtil.show(this, getString(R.string.about));
                 break;
             case R.id.bt_settings:
-                Toast.makeText(this, "设置", Toast.LENGTH_SHORT).show();
+                ToastUtil.show(this, getString(R.string.setting));
                 break;
             case R.id.bt_exit:
                 finish();
+                System.exit(0);
+                android.os.Process.killProcess(android.os.Process.myPid());
                 break;
             default:
                 break;
@@ -90,16 +94,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void showEnterPlayerNameDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle("请输入玩家名");
+        builder.setTitle(getString(R.string.hint_enterplayername));
         builder.setIcon(android.R.drawable.ic_dialog_info);
         final EditText ed_playername = new EditText(MainActivity.this);
         builder.setView(ed_playername);
-        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+        builder.setPositiveButton(getString(R.string.confirm), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(final DialogInterface dialogInterface, int i) {
                 String playname = ed_playername.getText().toString();
                 if ("".equals(playname)) {
-                    ToastUtil.show(MainActivity.this, "玩家名不能为空！");
+                    ToastUtil.show(MainActivity.this, getString(R.string.fail_playnamemustnotnull));
                 } else {
                     PlayerManager.getInstance().createMainplayer(playname, new PlayerManager.OnCreateOrGetPlayerListener() {
                         @Override
@@ -115,14 +119,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                         @Override
                         public void OnCreatePlayerFail(String info) {
-                            ToastUtil.show(MainActivity.this, "获取用户失败，无法多人游戏");
+                            ToastUtil.show(MainActivity.this, getString(R.string.fail_couldnotmultigame));
                             MainActivity.this.setView();
                         }
                     });
                 }
             }
         });
-        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+        builder.setNegativeButton(getString(R.string.cancel), new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialogInterface, int i) {
                 MainActivity.this.finish();

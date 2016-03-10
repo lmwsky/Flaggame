@@ -2,6 +2,7 @@ package com.example.isky.flaggame.role;
 
 import android.util.Log;
 
+import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.example.isky.flaggame.game.GameConfig;
 import com.example.isky.flaggame.game.GameEventFactory;
 import com.example.isky.flaggame.game.GameHandler;
@@ -16,19 +17,21 @@ public class Miner extends RoleSign {
     private int num_mine = 0;
 
     public Miner() {
-        setDist_investigate(GameConfig.DIST_INVESTIGATE_MINER);
-        setDist_attract(GameConfig.DIST_ATTRACT_MINER);
-        setIcon(GameConfig.BITMAP_MINER);
+        this(0);
     }
 
     public Miner(int team) {
         setTeam(team);
         setDist_investigate(GameConfig.DIST_INVESTIGATE_MINER);
         setDist_attract(GameConfig.DIST_ATTRACT_MINER);
-        setIcon(GameConfig.BITMAP_MINER);
-
     }
 
+    @Override
+    public void setTeam(int team) {
+        super.setTeam(team);
+        setIcon(BitmapDescriptorFactory.fromResource(GameConfig.BITMAP_MINER[team % 3]));
+
+    }
     @Override
     public void skill() {
         if (isDead == true)

@@ -17,7 +17,6 @@ public class Mine extends FixedSign {
         setInfluence(GameConfig.DIST_MINE_INFLUENCE);
         setLatLng(new LatLng(0, 0));
         setIcon(GameConfig.BITMAP_MINE);
-
     }
 
     public String getMinerSignature() {

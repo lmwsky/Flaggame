@@ -1,5 +1,6 @@
 package com.example.isky.flaggame.role;
 
+import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.amap.api.maps2d.model.LatLng;
 import com.example.isky.flaggame.game.GameConfig;
 
@@ -12,14 +13,18 @@ public class Flag extends FixedSign {
 
     public Flag() {
         setLatLng(0, 0);
-        setIcon(GameConfig.BITMAP_FLAG);
-
+        setIcon(BitmapDescriptorFactory.fromResource(GameConfig.BITMAP_FLAG_RED));
     }
 
     public Flag(LatLng latLng) {
         setLatLng(latLng.latitude, latLng.longitude);
-        setIcon(GameConfig.BITMAP_FLAG);
+        setIcon(BitmapDescriptorFactory.fromResource(GameConfig.BITMAP_FLAG_RED));
+    }
 
+    @Override
+    public void setTeam(int team) {
+        super.setTeam(team);
+        setIcon(BitmapDescriptorFactory.fromResource(GameConfig.BITMAP_FLAGARRAY[team % 3]));
     }
 
     public boolean isOccupied() {

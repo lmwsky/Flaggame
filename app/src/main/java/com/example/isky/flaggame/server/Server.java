@@ -425,7 +425,6 @@ public class Server {
     }
 
     public void sendPlayerLocation(PlayerManager.Player player) {
-        Log.d("hh", "send player location " + JsonUtil.get_locationstr(player.getLatLng()));
         updateData(TABLEID_PLAYER, player.get_id(), "_location", JsonUtil.get_locationstr(player.getLatLng()), null);
     }
 

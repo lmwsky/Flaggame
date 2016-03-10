@@ -383,8 +383,12 @@ public class PlayerManager {
             LocationSource.OnLocationChangedListener mainplayerlocationsenderlistener = new LocationSource.OnLocationChangedListener() {
                 @Override
                 public void onLocationChanged(Location location) {
-                    setLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
-                    Server.getInstance().sendPlayerLocation(Player.this);
+                    if (Math.abs(location.getLongitude() - latLng.longitude) < 0.0000000001 && Math.abs(location.getLatitude() - latLng.latitude) < 0.0000000001)
+                        return;
+                    else {
+                        setLatLng(new LatLng(location.getLatitude(), location.getLongitude()));
+                        Server.getInstance().sendPlayerLocation(Player.this);
+                    }
                 }
             };
             LocationServiceManager.getInstance().activate(mainplayerlocationsenderlistener);

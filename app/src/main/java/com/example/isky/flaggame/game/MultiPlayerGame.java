@@ -215,8 +215,8 @@ public class MultiPlayerGame extends GameManager {
         }
 
 
-        Flag flag1 = SignFactory.produceFlag(RandUtil.moveToGoal(startlatLng, endlatLng, GameConfig.dist_flag), 0);
-        Flag flag2 = SignFactory.produceFlag(RandUtil.moveToGoal(endlatLng, startlatLng, GameConfig.dist_flag), 1);
+        Flag flag1 = SignFactory.produceFlag(RandUtil.moveToGoal(startlatLng, endlatLng, GameConfig.dist_flag * 1000), 0);
+        Flag flag2 = SignFactory.produceFlag(RandUtil.moveToGoal(endlatLng, startlatLng, GameConfig.dist_flag * 1000), 1);
 
         flagArrayList.add(flag1);
         flagArrayList.add(flag2);

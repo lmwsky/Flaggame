@@ -39,7 +39,6 @@
         <activity android:name=".activity.MapActivity">
 
         </activity>
-        <activity android:name=".activity.CreateRoomActivity"></activity>
         <activity
             android:name=".activity.MainActivity"
             android:exported="true"
