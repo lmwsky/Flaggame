@@ -16,8 +16,11 @@ public class Mine extends FixedSign {
     public Mine() {
         setInfluence(GameConfig.DIST_MINE_INFLUENCE);
         setLatLng(new LatLng(0, 0));
-        setIcon(GameConfig.BITMAP_MINE);
+    }
 
+    @Override
+    public int getIconResouseid() {
+        return GameConfig.BITMAP_MINE;
     }
 
     public String getMinerSignature() {
@@ -84,9 +87,6 @@ public class Mine extends FixedSign {
      * @return
      */
     public boolean isinfluence(LatLng latLng) {
-        if (MapUtil.getDistance(latLng, getLatLng()) < influence)
-            return true;
-        else
-            return false;
+        return MapUtil.getDistance(latLng, getLatLng()) < influence;
     }
 }

@@ -3,4 +3,18 @@
     <string name="endgame">结束游戏</string>
     <string name="startgame">开始游戏</string>
     <string name="attract">攻击</string>
+    <string name="fail_createroomwithoutmainplayer">未登陆不能建立房间</string>
+    <string name="dialogtitle_createroom">创建房间</string>
+    <string name="fail_createroom">创建房间失败</string>
+    <string name="columnname_roomid">roomid</string>
+    <string name="noavailible">找不到可用房间，要不你刷新一下？</string>
+    <string name="hint_enterplayername">请输入玩家名</string>
+    <string name="confirm">确定</string>
+    <string name="fail_playnamemustnotnull">玩家名不能为空！</string>
+    <string name="fail_couldnotmultigame">获取用户失败，无法多人游戏</string>
+    <string name="cancel">取消</string>
+    <string name="about">关于</string>
+    <string name="setting">设置</string>
+    <string name="fail_getplayer">获取用户失败，无法多人游戏</string>
+    <string name="signname_flag">旗帜</string>
 </resources>

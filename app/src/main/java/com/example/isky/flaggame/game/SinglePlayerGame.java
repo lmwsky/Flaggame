@@ -12,6 +12,8 @@ import com.example.isky.flaggame.role.Flag;
 import com.example.isky.flaggame.role.Miner;
 import com.example.isky.flaggame.role.Monster;
 import com.example.isky.flaggame.role.RoleSign;
+import com.example.isky.flaggame.role.Sapper;
+import com.example.isky.flaggame.role.Scout;
 import com.example.isky.flaggame.role.SignFactory;
 import com.example.isky.flaggame.role.SignManager;
 import com.example.isky.flaggame.server.LocationServiceManager;
@@ -37,14 +39,13 @@ public class SinglePlayerGame extends GameManager {
      */
     public SinglePlayerGame(Activity activity, AMap aMap) {
         super(activity, aMap);
-        /*初始化三类监听器*/
     }
 
     @Override
     public void InitGame() {
         if (gamestate != STATE_UNINT)
             return;
-        ToastUtil.show(activity, "initgame");
+        ToastUtil.showshortToast(activity, "initgame");
 
         initlocationreceivelistener = new LocationSource.OnLocationChangedListener() {
             @Override
@@ -62,12 +63,25 @@ public class SinglePlayerGame extends GameManager {
      * @param startlatlng 玩家起始位置
      */
     private void InitGame(final LatLng startlatlng) {
+
         /*生成各种sign及相应的marker，将其加入SignMarkerManager的管理*/
         RoleSign mainPlayer = new Miner(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
-        mainPlayer.setLatLng(startlatlng);
-        mainPlayer.setIcon(GameConfig.mainplayerBitmapLive);
-        GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddMainPlayerRoleSign(mainPlayer));
+        switch (GameConfig.mainplayerroletype) {
+            case GameConfig.ROLE_MINER:
+                mainPlayer = new Miner(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
+                break;
+            case GameConfig.ROLE_SAPPER:
+                mainPlayer = new Sapper(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
 
+                break;
+            case GameConfig.ROLE_SCOUT:
+                mainPlayer = new Scout(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
+                break;
+            default:
+                break;
+        }
+        mainPlayer.setLatLng(startlatlng);
+        GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddMainPlayerRoleSignInSingleGame(mainPlayer));
         //生成旗帜
         final Flag flag = SignFactory.produceFlag(startlatlng, GameConfig.dist_flag, GameConfig.SINGLEGAME_MONSTERTEAM);
         GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddFixedSignEvent(flag));
@@ -107,14 +121,14 @@ public class SinglePlayerGame extends GameManager {
     /**
      * 根据路径和中心点初始化怪物
      *
-     * @param walkPath
-     * @param centerpoint
+     * @param walkPath    一条路径
+     * @param centerpoint 怪物产生的中心点
      */
     private void initMonster(WalkPath walkPath, LatLng centerpoint) {
         List<WalkStep> walkPathList = walkPath.getSteps();
         SignManager.getInstance().setWalkPathList(walkPathList);
         //生成怪物
-        ArrayList<Monster> monsterlist = SignFactory.produceMonster(GameConfig.num_monsters, centerpoint, GameConfig.dist_monster);
+        ArrayList<Monster> monsterlist = SignFactory.produceMonster(GameConfig.num_monsters / 2, centerpoint, GameConfig.dist_monster);
         for (Monster monster : monsterlist) {
             GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddRoleSign(monster, null));
             GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceBindWalkPathAI(monster.getSignature()));
@@ -126,7 +140,7 @@ public class SinglePlayerGame extends GameManager {
         if (gamestate != STATE_INIT && gamestate != STATE_STOP)
             return;
         gamestate = STATE_START;
-        ToastUtil.show(activity, "startGame");
+        ToastUtil.showshortToast(activity, "startGame");
         for (Monster monster : SignManager.getInstance().getAllMonsters()) {
             monster.startmove();
         }
@@ -149,6 +163,8 @@ public class SinglePlayerGame extends GameManager {
 
     @Override
     public void EndGame() {
+        if (gamestate == STATE_END)
+            return;
         gamestate = STATE_END;
         /*摧毁定位服务的实例已经所有监听*/
         LocationServiceManager.getInstance().destory();

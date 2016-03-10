@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="player_type">
+        <item>埋雷手</item>
+        <item>排雷手</item>
+        <item>指挥官</item>
+    </string-array>
+</resources>

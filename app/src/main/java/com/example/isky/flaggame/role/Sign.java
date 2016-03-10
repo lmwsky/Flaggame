@@ -10,7 +10,7 @@ import java.util.ArrayList;
  * 游戏中能够在地图上显示必须继承这个类
  * 必须具有所在经纬度和显示的图片描述
  */
-public class Sign {
+public abstract class Sign {
     protected LatLng latLng;
     transient protected BitmapDescriptor icon;//标志的图片
     protected String name;//标志的名字
@@ -92,6 +92,8 @@ public class Sign {
     public void setName(String name) {
         this.name = name;
     }
+
+    public abstract int getIconResouseid();
 
     public int getTeam() {
         return team;

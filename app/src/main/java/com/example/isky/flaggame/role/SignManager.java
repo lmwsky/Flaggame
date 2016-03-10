@@ -4,13 +4,19 @@ import android.graphics.Color;
 import android.support.annotation.Nullable;
 
 import com.amap.api.maps2d.AMap;
+import com.amap.api.maps2d.AMapOptions;
+import com.amap.api.maps2d.CameraUpdateFactory;
+import com.amap.api.maps2d.UiSettings;
 import com.amap.api.maps2d.model.BitmapDescriptor;
+import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.amap.api.maps2d.model.Circle;
 import com.amap.api.maps2d.model.CircleOptions;
+import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.maps2d.model.Marker;
 import com.amap.api.maps2d.model.MarkerOptions;
 import com.amap.api.maps2d.model.MyLocationStyle;
 import com.amap.api.services.route.WalkStep;
+import com.example.isky.flaggame.R;
 import com.example.isky.flaggame.game.GameConfig;
 import com.example.isky.flaggame.game.GameManager;
 import com.example.isky.flaggame.server.LocationServiceManager;
@@ -20,6 +26,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 /**
  * Created by isky on 2016/2/15.
@@ -50,6 +58,8 @@ public class SignManager {
     private GameManager gameManage;
     private ArrayList<PlayerManager.Player> allplayers = new ArrayList<>();
     private List<WalkStep> walkPathList;
+    private ArrayList boombitmaplist;
+    private Map<String, String> RoleSignsignatureplayeridHashMap = new HashMap<>();
 
     public static SignManager getInstance() {
         if (signManager == null)
@@ -59,10 +69,6 @@ public class SignManager {
 
     public static boolean isGameStarting() {
         return getInstance().getGAMESTATE() == GameManager.STATE_START;
-    }
-
-    public AMap getaMap() {
-        return aMap;
     }
 
     public void setaMap(AMap aMap) {
@@ -131,10 +137,25 @@ public class SignManager {
         }
     }
 
+    public void showBoomAmination(LatLng latLng) {
+        final Marker marker = aMap.addMarker(MarkerOptionsFactory.produceBoomAnimation(latLng));
+
+        final Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                if (marker.isVisible()) {
+                    marker.remove();
+                    timer.cancel();
+                }
+            }
+        }, 1300, 100);
+    }
+
     /**
      * 将sign移除管理，并且移除对应的地图Marker
      *
-     * @param sign
+     * @param sign 要移除的sign
      */
     public void remove(Sign sign) {
         if (sign == null)
@@ -160,7 +181,7 @@ public class SignManager {
             if (sign instanceof RebirthPoint)
                 rebirthpointArrayList.remove(sign);
             if (sign instanceof Mine)
-                mineArrayList.remove((Mine) sign);
+                mineArrayList.remove(sign);
         }
     }
 
@@ -168,11 +189,11 @@ public class SignManager {
     /**
      * 将sign与Marker进行绑定,若已经有绑定则接触旧绑定
      *
-     * @param sign
-     * @param marker
+     * @param sign   要绑定的sign
+     * @param marker 要绑定的marker
      */
     public void bindSignAndMarker(Sign sign, Marker marker) {
-        if (signMarkerMap.containsKey(sign) == true)
+        if (signMarkerMap.containsKey(sign))
             signMarkerMap.remove(sign);
         signMarkerMap.put(sign, marker);
     }
@@ -180,11 +201,11 @@ public class SignManager {
     /**
      * 将sign与其攻击圈的Marker进行绑定,若已经有绑定则接触旧绑定
      *
-     * @param sign
-     * @param circle
+     * @param sign   拥有攻击圈的sign
+     * @param circle sign的攻击圈
      */
     public void bindSignAndMarker(RoleSign sign, Circle circle) {
-        if (signCircleMap.containsKey(sign) == true)
+        if (signCircleMap.containsKey(sign))
             signCircleMap.remove(sign);
         signCircleMap.put(sign, circle);
     }
@@ -216,8 +237,8 @@ public class SignManager {
     /**
      * 获取其他队的地雷
      *
-     * @param team
-     * @return
+     * @param team 不要获取的队伍
+     * @return 其他队伍的地雷
      */
     public ArrayList<Mine> getOtherTeamMine(int team) {
         ArrayList<Mine> mines = new ArrayList<>();
@@ -393,8 +414,12 @@ public class SignManager {
         } else {
             add(sign);
             setMainplayer(sign);
-
-
+            int iconResouseid = sign.getIconResouseid();
+            if (iconResouseid != GameConfig.mainplayerBitmapLive) {
+                changeMainplayerIcon(iconResouseid);
+                GameConfig.mainplayerBitmapLive = iconResouseid;
+                GameConfig.mainplayerBitmapDie = iconResouseid;
+            }
             CircleOptions circleOptions = MarkerOptionsFactory.produceAttackCircleBySign(sign);
             Circle circle = aMap.addCircle(circleOptions);
             bindSignAndMarker(sign, circle);
@@ -411,33 +436,99 @@ public class SignManager {
         initMap();
     }
 
-    public void changeMainplayerIcon(BitmapDescriptor bitmapDescriptor) {
-        myLocationStyle = myLocationStyle.myLocationIcon(bitmapDescriptor);
-        aMap.setMyLocationStyle(myLocationStyle);
+    /**
+     * 改变mainplayer的图标
+     *
+     * @param resouseid 改变后的resouseid
+     */
+    public void changeMainplayerIcon(int resouseid) {
+        if (myLocationStyle != null) {
+            BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(resouseid);
+            myLocationStyle = myLocationStyle.myLocationIcon(bitmapDescriptor);
+            aMap.setMyLocationStyle(myLocationStyle);
+        } else {
+            try {
+                throw new Exception("amp is not setted to signmanager");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 改变除了mainplayer以外的sign的图片
+     *
+     * @param signnature 要改变的sign的签名
+     * @param resouseid  改变后的 resoused
+     */
+    public void changeNormalSignIcon(String signnature, int resouseid) {
+        if (signnature != null) {
+            Sign sign = getSignBySignature(signnature);
+            Marker marker = getMarker(sign);
+            if (marker != null) {
+                BitmapDescriptor bitmapDescriptor = BitmapDescriptorFactory.fromResource(resouseid);
+                marker.setIcon(bitmapDescriptor);
+            } else {
+                try {
+                    throw new Exception("can not find the marker match to signature");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            try {
+                throw new Exception("signnature can not be null");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void initMap() {
-        // 自定义系统定位小蓝点
-        myLocationStyle = new MyLocationStyle();
-        myLocationStyle.myLocationIcon(GameConfig.mainplayerBitmapLive);// 设置小蓝点的图标
-        myLocationStyle.strokeColor(Color.TRANSPARENT);// 设置圆形的边框颜色
-        myLocationStyle.radiusFillColor(Color.TRANSPARENT);// 设置圆形的填充颜色
-        myLocationStyle.strokeWidth(0.0f);// 设置圆形的边框粗细
-        aMap.setMyLocationStyle(myLocationStyle);
-        aMap.setLocationSource(LocationServiceManager.getInstance());// 设置定位监听
-        aMap.getUiSettings().setMyLocationButtonEnabled(true);// 设置默认定位按钮是否显示
-        aMap.setMyLocationEnabled(true);// 设置为true表示显示定位层并可触发定位，false表示隐藏定位层并不可触发定位，默认是false
+        if (aMap != null) {
+            // 自定义系统定位小蓝点
+            myLocationStyle = new MyLocationStyle();
+            myLocationStyle.myLocationIcon(BitmapDescriptorFactory.fromResource(GameConfig.mainplayerBitmapLive));// 设置小蓝点的图标
+            myLocationStyle.strokeColor(Color.TRANSPARENT);// 设置圆形的边框颜色
+            myLocationStyle.radiusFillColor(Color.TRANSPARENT);// 设置圆形的填充颜色
+            myLocationStyle.strokeWidth(0.0f);// 设置圆形的边框粗细
+            aMap.setMyLocationStyle(myLocationStyle);
+            aMap.setLocationSource(LocationServiceManager.getInstance());// 设置定位监听
+            aMap.setMyLocationEnabled(true);// 设置为true表示显示定位层并可触发定位，false表示隐藏定位层并不可触发定位，默认是false
+            aMap.animateCamera(CameraUpdateFactory.newLatLngZoom
+                    (PlayerManager.getInstance().getMainplayer().getLatLng(), aMap.getMaxZoomLevel() - 2));
+            UiSettings uiSettings = aMap.getUiSettings();
+            uiSettings.setMyLocationButtonEnabled(true);// 设置默认定位按钮是否显示
+            uiSettings.setAllGesturesEnabled(true);
+            uiSettings.setZoomPosition(AMapOptions.ZOOM_POSITION_RIGHT_CENTER);
+            uiSettings.setLogoPosition(AMapOptions.LOGO_POSITION_BOTTOM_RIGHT);
+        } else {
+            try {
+                throw new Exception("amp is not setted to signmanager");
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
     }
 
 
     public void bindRoleSignWithPlayerid(String roleSignsignature, String playerid) {
         playeridRoleSignsignatureHashMap.put(playerid, roleSignsignature);
+        RoleSignsignatureplayeridHashMap.put(roleSignsignature, playerid);
     }
 
     public RoleSign getBindingRolesignByPlayerid(String playerid) {
-        Sign sign = SignManager.getInstance().getSignBySignature(playeridRoleSignsignatureHashMap.get(playerid));
+        Sign sign = getSignBySignature(playeridRoleSignsignatureHashMap.get(playerid));
         if (sign != null)
             return (RoleSign) sign;
+        else
+            return null;
+    }
+
+    public PlayerManager.Player getBindingPlayerByRolesignsignature(String roleSignsignature) {
+        PlayerManager.Player player = getPlayerByPlayerid(RoleSignsignatureplayeridHashMap.get(roleSignsignature));
+        if (player != null)
+            return player;
         else
             return null;
     }
@@ -493,5 +584,42 @@ public class SignManager {
 
     public void setWalkPathList(List<WalkStep> walkPathList) {
         this.walkPathList = walkPathList;
+    }
+
+    /**
+     * 更新rolesign的图标，与当前rolesign的死活状态相适应
+     *
+     * @param rolesignsignature rolesign的签名
+     */
+    public void updateRolesignIcon(String rolesignsignature) {
+        RoleSign roleSign = (RoleSign) getSignBySignature(rolesignsignature);
+        if (roleSign == mainplayer) {
+            changeMainplayerIcon(getResourceidMatchRolesignState(roleSign));
+        } else
+            changeNormalSignIcon(rolesignsignature, getResourceidMatchRolesignState(roleSign));
+    }
+
+    /**
+     * 获取与当前rolesign死活状态相匹配的图片资源id
+     *
+     * @param roleSign 要获取的游戏角色
+     * @return 资源id，若无法找到，返回默认图标
+     */
+    public int getResourceidMatchRolesignState(RoleSign roleSign) {
+        int index = 0;
+        if (roleSign.isDead())
+            index = 1;
+        int resourceidarray[][] = null;
+        if (roleSign instanceof Miner)
+            resourceidarray = GameConfig.BITMAP_MINER;
+        if (roleSign instanceof Sapper)
+            resourceidarray = GameConfig.BITMAP_SAPPER;
+        if (roleSign instanceof Scout)
+            resourceidarray = GameConfig.BITMAP_SCOUT;
+
+        if (resourceidarray != null)
+            return resourceidarray[index][roleSign.getTeam() % 3];
+        else
+            return R.drawable.location_marker;
     }
 }

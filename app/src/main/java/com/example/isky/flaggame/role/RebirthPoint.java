@@ -8,10 +8,15 @@ import com.example.isky.flaggame.game.GameConfig;
  */
 public class RebirthPoint extends FixedSign {
     public RebirthPoint() {
-        setIcon(GameConfig.BITMAP_REBIRTHPOINT);
     }
+
+    @Override
+    public int getIconResouseid() {
+        return GameConfig.BITMAP_REBIRTHPOINT;
+    }
+
     public void rebirth(RoleSign roleSign) {
-        if (isRebirthable(roleSign)){
+        if (isRebirthable(roleSign)) {
             roleSign.rebirth();
             notifyOnFixedSignOnRebirthListeners();
         }

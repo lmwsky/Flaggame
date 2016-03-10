@@ -24,6 +24,7 @@ import util.ToastUtil;
  * Created by isky on 2016/1/25.
  * 多人游戏的管理，可以初始化游戏，开始游戏，暂停游戏，继续游戏，结束游戏
  */
+
 public class MultiPlayerGame extends GameManager {
 
     /**
@@ -40,7 +41,7 @@ public class MultiPlayerGame extends GameManager {
     public void InitGame() {
         if (gamestate != STATE_UNINT)
             return;
-        ToastUtil.show(activity, "initgame");
+        ToastUtil.showshortToast(activity, "initgame");
         PlayerManager.Player player = PlayerManager.getInstance().getMainplayer();
         RoomManage.Room room = PlayerManager.getInstance().getCurrentRoom();
 
@@ -64,7 +65,7 @@ public class MultiPlayerGame extends GameManager {
         if (gamestate != STATE_INIT && gamestate != STATE_STOP)
             return;
         gamestate = STATE_START;
-        ToastUtil.show(activity, "startGame");
+        ToastUtil.showshortToast(activity, "startGame");
     }
 
     @Override
@@ -72,7 +73,7 @@ public class MultiPlayerGame extends GameManager {
         if (gamestate != STATE_START)
             return;
         gamestate = STATE_STOP;
-        ToastUtil.show(activity, "stopGame");
+        ToastUtil.showshortToast(activity, "stopGame");
     }
 
     @Override
@@ -80,19 +81,19 @@ public class MultiPlayerGame extends GameManager {
         if (gamestate != STATE_STOP)
             return;
         gamestate = STATE_START;
-
-        ToastUtil.show(activity, "continueGame");
+        ToastUtil.showshortToast(activity, "continueGame");
     }
 
     @Override
     public void EndGame() {
+        if (gamestate == STATE_END)
+            return;
         gamestate = STATE_END;
-        ToastUtil.show(activity, "endGame");
+        ToastUtil.showshortToast(activity, "endGame");
         /*摧毁定位服务的实例已经所有监听*/
         LocationServiceManager.getInstance().destory();
         Server.getInstance().stopReceiveGameEvent();
         Server.getInstance().stopReceivePlayerLocation();
-        // SignManager.getInstance().initMap();//重新设置地图定位
         SignManager.getInstance().clear();
     }
 
@@ -215,8 +216,8 @@ public class MultiPlayerGame extends GameManager {
         }
 
 
-        Flag flag1 = SignFactory.produceFlag(RandUtil.moveToGoal(startlatLng, endlatLng, GameConfig.dist_flag), 0);
-        Flag flag2 = SignFactory.produceFlag(RandUtil.moveToGoal(endlatLng, startlatLng, GameConfig.dist_flag), 1);
+        Flag flag1 = SignFactory.produceFlag(RandUtil.moveToGoal(startlatLng, endlatLng, GameConfig.dist_flag * 1000), 0);
+        Flag flag2 = SignFactory.produceFlag(RandUtil.moveToGoal(endlatLng, startlatLng, GameConfig.dist_flag * 1000), 1);
 
         flagArrayList.add(flag1);
         flagArrayList.add(flag2);

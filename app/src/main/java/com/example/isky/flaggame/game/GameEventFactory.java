@@ -1,33 +1,24 @@
 package com.example.isky.flaggame.game;
 
 import com.example.isky.flaggame.role.FixedSign;
+import com.example.isky.flaggame.role.Flag;
+import com.example.isky.flaggame.role.Mine;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.Sign;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.RoomManage;
 import com.example.isky.flaggame.server.Server;
 import com.example.isky.flaggame.server._idQuery;
-import com.google.gson.Gson;
 
 /**
  * Created by isky on 2016/3/5.
  * 产生游戏事件的对象的工厂
  */
 public class GameEventFactory {
-    private static Gson gson = new Gson();
-
     public static GameEvent produceAddFixedSignEvent(FixedSign fixedSign) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_ADDSIGN);
         gameEvent.obj = fixedSign;
-        return gameEvent;
-    }
-
-    public static GameEvent produceSwithBitMapToDie(Sign sign) {
-        GameEvent gameEvent = new GameEvent();
-        gameEvent.setEventtype(GameHandler.MSG_SWITCHICONTODIE);
-        gameEvent.obj = sign.getSignature();
-
         return gameEvent;
     }
 
@@ -49,27 +40,41 @@ public class GameEventFactory {
     public static GameEvent produceShowToast(String str) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_SHOWTOAST);
-
         gameEvent.obj = str;
 
+        return gameEvent;
+    }
+
+    /**
+     * 并且去掉从地图上去掉对应的地雷，产生某个地雷爆炸的动画
+     *
+     * @param mine 爆炸的地雷
+     * @return 事件
+     */
+    public static GameEvent produceBoomGameEvent(Mine mine) {
+        GameEvent gameEvent = new GameEvent();
+        gameEvent.setEventtype(GameHandler.MSG_BOOM);
+        gameEvent.obj = mine.getSignature();
+        return gameEvent;
+    }
+
+    /**
+     * 产生某个队赢得游戏的事件
+     *
+     * @param roleSign 赢得游戏的人
+     * @return 事件
+     */
+    public static GameEvent produceWinEvent(RoleSign roleSign) {
+        GameEvent gameEvent = new GameEvent();
+        gameEvent.setEventtype(GameHandler.MSG_WINGAME);
+        gameEvent.obj = roleSign.getSignature();
         return gameEvent;
     }
 
     public static GameEvent produceRevomeSign(Sign sign) {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_REMOVESIGN);
-
         gameEvent.obj = sign.getSignature();
-
-        return gameEvent;
-    }
-
-    public static GameEvent produceSwithBitMapToLive(Sign sign) {
-        GameEvent gameEvent = new GameEvent();
-        gameEvent.setEventtype(GameHandler.MSG_SWITCHICONTOLIVE);
-
-        gameEvent.obj = sign.getSignature();
-
         return gameEvent;
     }
 
@@ -97,18 +102,17 @@ public class GameEventFactory {
      * @param roleSign
      * @return
      */
-    public static GameEvent produceAddMainPlayerRoleSign(RoleSign roleSign) {
+    public static GameEvent produceAddMainPlayerRoleSignInSingleGame(RoleSign roleSign) {
         PlayerManager.Player player = PlayerManager.getInstance().getMainplayer();
         String rolesignplayerid = null;
         if (player != null)
             rolesignplayerid = player.get_id();
 
         GameEvent gameEvent = new GameEvent();
-        gameEvent.setEventtype(GameHandler.MSG_ADDMAINPLAYERROLESIGN_SINGLE);
+        gameEvent.setEventtype(GameHandler.MSG_SINGLE_ADDMAINPLAYERROLESIGN);
         //将rolesign对应的playerid设置为Toplayerid
         gameEvent.setToplayerid(rolesignplayerid);
         gameEvent.obj = roleSign;
-
         return gameEvent;
     }
 
@@ -116,7 +120,6 @@ public class GameEventFactory {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_BINDWALKPATHAI);
         gameEvent.obj = rolesignsignature;
-
         return gameEvent;
     }
 
@@ -134,6 +137,41 @@ public class GameEventFactory {
     public static GameEvent produceEndGameEvent() {
         GameEvent gameEvent = new GameEvent();
         gameEvent.setEventtype(GameHandler.MSG_ENDGAME);
+        return gameEvent;
+    }
+
+    public static GameEvent produceSweepMineGameEvent(Mine mine) {
+        GameEvent gameEvent = new GameEvent();
+        gameEvent.setEventtype(GameHandler.MSG_BOOMSWEEP);
+        gameEvent.obj = mine.getSignature();
+
+        return gameEvent;
+    }
+
+    /**
+     * 产生一个占领旗帜的事件
+     *
+     * @param flag 被占领的旗帜
+     * @return 产生的事件
+     */
+    public static GameEvent produceOccupyFlagGameEvent(Flag flag) {
+        GameEvent gameEvent = new GameEvent();
+        gameEvent.setEventtype(GameHandler.MSG_OCCUPYFLAGE);
+        gameEvent.obj = flag.getSignature();
+        return gameEvent;
+    }
+
+    public static GameEvent produceMakeRolesignDieEvnet(RoleSign roleSign) {
+        GameEvent gameEvent = new GameEvent();
+        gameEvent.setEventtype(GameHandler.MSG_MAKEROLESIGNDIE);
+        gameEvent.obj = roleSign.getSignature();
+        return gameEvent;
+    }
+
+    public static GameEvent produceMakeRolesignLiveEvnet(RoleSign roleSign) {
+        GameEvent gameEvent = new GameEvent();
+        gameEvent.setEventtype(GameHandler.MSG_MAKEROLESIGNLIVE);
+        gameEvent.obj = roleSign.getSignature();
         return gameEvent;
     }
 

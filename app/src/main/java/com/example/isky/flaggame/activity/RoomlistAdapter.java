@@ -15,13 +15,14 @@ import java.util.List;
 
 /**
  * Created by x1832 on 2016/3/4.
+ * roomlist 的adapter 目前 
  */
-public class MyAdapter extends BaseAdapter {
+public class RoomlistAdapter extends BaseAdapter {
 
     List<RoomManage.Room> list;
     LayoutInflater inflater;
 
-    public MyAdapter(Context context, List<RoomManage.Room> list) {
+    public RoomlistAdapter(Context context, List<RoomManage.Room> list) {
         this.inflater = LayoutInflater.from(context);
         this.list = list;
     }
@@ -63,24 +64,6 @@ public class MyAdapter extends BaseAdapter {
         viewHolder.maxNumber.setText(room.getNeedplayernum() + "");
 
         return convertView;
-    }
-
-    /**
-     * 只添加尚未在列表中存在的
-     *
-     * @param room
-     */
-    public void addData(RoomManage.Room room) {
-        boolean isExist = false;
-        for (RoomManage.Room room1 : list) {
-            if (room1.get_id().equals(room)) {
-                isExist = true;
-                break;
-            }
-        }
-        if (isExist == false)
-            list.add(room);
-
     }
 
     public void setRoomlist(ArrayList<RoomManage.Room> roomlist) {

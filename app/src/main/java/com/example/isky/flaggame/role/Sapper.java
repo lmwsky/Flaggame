@@ -13,17 +13,13 @@ import util.GetScore;
 public class Sapper extends RoleSign {
 
     public Sapper() {
-        setDist_attract(GameConfig.DIST_ATTRACT_SAPPER);
-        setDist_investigate(GameConfig.DIST_INVESTIGATE_SAPPER);
-        setIcon(GameConfig.BITMAP_SAPPER);
-
+        this(0);
     }
 
     public Sapper(int team) {
         setTeam(team);
         setDist_attract(GameConfig.DIST_ATTRACT_SAPPER);
         setDist_investigate(GameConfig.DIST_INVESTIGATE_SAPPER);
-        setIcon(GameConfig.BITMAP_SAPPER);
 
     }
 

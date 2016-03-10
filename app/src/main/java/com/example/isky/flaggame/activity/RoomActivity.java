@@ -54,7 +54,7 @@ public class RoomActivity extends Activity {
         TextView tv_room_name = (TextView) (findViewById(R.id.tv_room_name));
         tv_room_name.setText(currentRoom.getRoomname());
 
-        TextView tv_real_number = (TextView) (findViewById(R.id.tv_real_number));
+        final TextView tv_real_number = (TextView) (findViewById(R.id.tv_real_number));
         tv_real_number.setText(currentRoom.getPlayersnum() + "");
 
         TextView tv_max_number = (TextView) (findViewById(R.id.tv_max_number));
@@ -67,19 +67,21 @@ public class RoomActivity extends Activity {
         listView.setAdapter(adapter);
 
         final Timer getPlayerTimer = new Timer();
-        TimerTask getPlayersTimerTask = new TimerTask() {
+        final TimerTask getPlayersTimerTask = new TimerTask() {
             @Override
             public void run() {
                 currentRoom.getPlayersInCurrentRoom(new Server.OndatasearchListener() {
                     @Override
                     public void success(ArrayList<Object> datas) {
-                        Log.d(RoomActivity.class.getName(), "in this players=" + datas.size());
+                        ArrayList<PlayerManager.Player> playerArrayList = new ArrayList<PlayerManager.Player>();
                         adapter.setPlayerlist(datas);
                         for (Object o : datas) {
                             PlayerManager.Player player = (PlayerManager.Player) o;
-                            PlayerManager.getInstance().getCurrentRoom().addplayer(player.get_id());
-
+                            playerArrayList.add(player);
                         }
+                        PlayerManager.getInstance().getCurrentRoom().setALLplayerlist(playerArrayList);
+
+                        tv_real_number.setText(datas.size() + "");
                         adapter.notifyDataSetChanged();
                     }
 
@@ -107,7 +109,7 @@ public class RoomActivity extends Activity {
                 /*房主有责任通知其他游戏已经，通过修改房间状态*/
                 if (currentRoom.getOwner_id().equals(mainplayer.get_id())) {
                     if (currentRoom.isfull() == false) {
-                        ToastUtil.show(RoomActivity.this, "房间未满~");
+                        ToastUtil.showshortToast(RoomActivity.this, "房间未满~");
                         return;
                     }
                     currentRoom.startgame(
@@ -123,13 +125,13 @@ public class RoomActivity extends Activity {
 
                                 @Override
                                 public void fail(String info) {
-                                    ToastUtil.show(RoomActivity.this, "开始游戏发生了一点问题...");
+                                    ToastUtil.showshortToast(RoomActivity.this, "开始游戏发生了一点问题...");
                                     currentRoom.init();
                                 }
                             });
                 } else {
                     if (currentRoom.isStarting() == false) {
-                        ToastUtil.show(RoomActivity.this, "只有房主能够开始游戏~");
+                        ToastUtil.showshortToast(RoomActivity.this, "只有房主能够开始游戏~");
                         return;
                     }
                     Intent intent = new Intent();
@@ -157,9 +159,15 @@ public class RoomActivity extends Activity {
                         RoomManage.Room newRoom = (RoomManage.Room) object;
                         if (newRoom.isStarting()) {
                             getRoomstateTimer.cancel();
-
                             PlayerManager.getInstance().getCurrentRoom().setState(RoomManage.Room.START);
                             bt_startgame.callOnClick();
+                        }
+                        if (newRoom.isAbandon()) {
+                            getPlayersTimerTask.cancel();
+                            getRoomstateTimer.cancel();
+                            PlayerManager.getInstance().getCurrentRoom().setState(RoomManage.Room.ABANDON);
+                            PlayerManager.getInstance().setCurrentRoom(null);
+                            RoomActivity.this.finish();
                         }
                     }
 
@@ -191,7 +199,7 @@ public class RoomActivity extends Activity {
 
                         @Override
                         public void fail(String info) {
-                            ToastUtil.show(RoomActivity.this, "退出房间失败");
+                            ToastUtil.showshortToast(RoomActivity.this, "退出房间失败");
                             currentRoom.init();
                         }
                     });

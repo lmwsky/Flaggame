@@ -1,7 +1,6 @@
 package com.example.isky.flaggame.game;
 
 import android.app.Activity;
-import android.util.Log;
 import android.view.View;
 
 import com.amap.api.maps2d.AMap;
@@ -37,7 +36,7 @@ public abstract class GameManager {
 
     public static OnFixedSignListener onFixedSignListener = new FixedSignListener();
     public static OnOtherRoleSignlistener onOtherRolesignlistener = new OnOtherRoleSignlistener();
-    public static SinglePlayerMainPlayerlistener onSinglePlayerMainPlayerlistener = new SinglePlayerMainPlayerlistener();
+    public static MainplayerListener onMainplayerListener = new MainplayerListener();
     protected int gamestate = STATE_UNINT;
     protected GameHandler handler;//其他线程消息处理器
     protected Activity activity;
@@ -117,11 +116,18 @@ public abstract class GameManager {
         }
     }
 
+    public static class OnEndGameClickListener implements View.OnClickListener {
+
+        @Override
+        public void onClick(View view) {
+            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceEndGameEvent());
+        }
+    }
+
     /**
      * 使用技能按钮监听器,点击使用对应的技能,必须是游戏已经开始了
      */
     public static class OnSkillBtClickListener implements View.OnClickListener {
-
         @Override
         public void onClick(View view) {
             if (SignManager.isGameStarting()) {
@@ -155,7 +161,7 @@ public abstract class GameManager {
         }
     }
 
-    public static class SinglePlayerMainPlayerlistener implements OnRoleSignListener {
+    public static class MainplayerListener implements OnRoleSignListener {
         /**
          * 改变地图上Sign对应Marker的坐标
          *
@@ -179,7 +185,6 @@ public abstract class GameManager {
                             mine.boom();
                             ((RoleSign) sign).die();
                             GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(sign.getName() + "触发炸弹~"));
-                            Log.d("hit", "某人触发炸弹~");
                             return;
                         }
                     }
@@ -190,32 +195,22 @@ public abstract class GameManager {
 
         @Override
         public void onDielistener(RoleSign roleSign) {
-            Log.d("hit", "死亡，需到复活点处复活~");
-
+            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceMakeRolesignDieEvnet(roleSign));
             RebirthPoint rebirthPoint = SignFactory.produceRebirthpoint(
                     RandUtil.randPointerInCircle(roleSign.getLatLng(), GameConfig.DIST_REBIRTHPOINT),
                     SignManager.getInstance().getMainPlayer().getTeam());
-
             GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddFixedSignEvent(rebirthPoint));
-
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceSwithBitMapToDie(roleSign));
-
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(roleSign.getName() + "死亡，需到复活点处复活~"));
-
         }
 
         @Override
         public void onRebirthlistener(RoleSign roleSign) {
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceSwithBitMapToLive(roleSign));
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(roleSign.getName() + "已经重生~"));
-            Log.d("hit", "已经重生!");
+            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceMakeRolesignLiveEvnet(roleSign));
         }
 
         @Override
         public void onBeAttractedlistener(RoleSign attracker, RoleSign roleSign) {
             roleSign.die();
             GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast("被" + attracker.getName() + "攻击"));
-            Log.d("hit", "被攻击!");
         }
     }
 
@@ -254,11 +249,11 @@ public abstract class GameManager {
 
         @Override
         public void onDielistener(RoleSign roleSign) {
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(roleSign.getName() + "死亡~"));
-            if (roleSign instanceof Monster)
+            if (roleSign instanceof Monster) {
+                GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(roleSign.getName() + "死亡~"));
                 GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceRevomeSign(roleSign));
-            else {
-                GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceSwithBitMapToDie(roleSign));
+            } else {
+                GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceMakeRolesignDieEvnet(roleSign));
                 RebirthPoint rebirthPoint = SignFactory.produceRebirthpoint(
                         RandUtil.randPointerInCircle(roleSign.getLatLng(), GameConfig.DIST_REBIRTHPOINT),
                         roleSign.getTeam());
@@ -268,9 +263,7 @@ public abstract class GameManager {
 
         @Override
         public void onRebirthlistener(RoleSign roleSign) {
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceSwithBitMapToLive(roleSign));
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(roleSign.getName() + "已经重生~"));
-
+            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceMakeRolesignLiveEvnet(roleSign));
         }
 
         @Override
@@ -283,7 +276,6 @@ public abstract class GameManager {
      * 所有固定标志物的监听器
      */
     private static class FixedSignListener implements OnFixedSignListener {
-
         @Override
         public void OnRebirth(RebirthPoint rebirthPoint) {
             GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceRevomeSign(rebirthPoint));
@@ -291,27 +283,20 @@ public abstract class GameManager {
 
         @Override
         public void OnBeOccupied(RoleSign roleSign, Flag flag) {
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(roleSign.getName() + "占领旗帜"));
-
-            if (SignManager.getInstance().isWin(roleSign.getTeam())) {
+            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceOccupyFlagGameEvent(flag));
+            if (SignManager.getInstance().isWin(roleSign.getTeam()))
                 GameHandler.doGameEventAndSendifNeed(
-                        GameEventFactory.produceShowToast(roleSign.getName() + "的队伍取得胜利！！！"));
-                //TODO 把事件的触发改成GameEvent的方式
-                GameHandler.doGameEventAndSendifNeed(
-                        GameEventFactory.produceEndGameEvent());
-            }
+                        GameEventFactory.produceWinEvent(roleSign));
         }
 
         @Override
         public void OnBoom(Mine mine) {
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceRevomeSign(mine));
+            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceBoomGameEvent(mine));
         }
 
         @Override
         public void OnSweep(Sapper sapper, Mine mine) {
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceRevomeSign(mine));
-
-            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(sapper.getName() + "扫掉了地雷"));
+            GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceSweepMineGameEvent(mine));
         }
 
         @Override

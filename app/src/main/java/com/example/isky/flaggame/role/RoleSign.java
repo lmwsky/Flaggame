@@ -92,6 +92,11 @@ public abstract class RoleSign extends Sign implements LocationInfoReceiver {
         }
     }
 
+    @Override
+    public int getIconResouseid() {
+        return SignManager.getInstance().getResourceidMatchRolesignState(this);
+    }
+
     /**
      * RoleSign的技能，由子类负责实现
      */
@@ -187,9 +192,7 @@ public abstract class RoleSign extends Sign implements LocationInfoReceiver {
      */
     public boolean isInAttractCircle(Sign sign) {
         double distance = MapUtil.getDistance(this, sign);
-        if (distance < this.getDist_attract())
-            return true;
-        return false;
+        return distance < this.getDist_attract();
     }
 
     /**
@@ -284,6 +287,15 @@ public abstract class RoleSign extends Sign implements LocationInfoReceiver {
 
     public boolean isDead() {
         return isDead;
+    }
+
+    /**
+     * 直接设置死亡状态，并且不会触发监听器
+     *
+     * @param isDead
+     */
+    public void setDead(boolean isDead) {
+        this.isDead = isDead;
     }
 
     @Override

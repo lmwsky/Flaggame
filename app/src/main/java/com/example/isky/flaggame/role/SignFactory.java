@@ -1,10 +1,11 @@
 package com.example.isky.flaggame.role;
 
 import com.amap.api.maps2d.model.LatLng;
-import com.example.isky.flaggame.game.GameConfig;
+import com.example.isky.flaggame.R;
 
 import java.util.ArrayList;
 
+import util.GameApplication;
 import util.RandUtil;
 
 /**
@@ -12,8 +13,6 @@ import util.RandUtil;
  * Sign的生成工厂
  */
 public class SignFactory {
-
-
     /**
      * 在距离某个点的一定距离随机产生旗帜
      *
@@ -38,7 +37,6 @@ public class SignFactory {
      */
     public static Monster produceMonster(LatLng center, double radius) {
         Monster monster = new Monster(RandUtil.randPointerOnCircle(center, radius));
-        monster.setIcon(GameConfig.BITMAP_MONSTER);
         monster.setName("怪物");
         return monster;
     }
@@ -63,7 +61,6 @@ public class SignFactory {
         RebirthPoint rebirthpoint = new RebirthPoint();
         rebirthpoint.setTeam(team);
         rebirthpoint.setLatLng(latLng);
-        rebirthpoint.setIcon(GameConfig.BITMAP_REBIRTHPOINT);
         rebirthpoint.setName("复活点");
         return rebirthpoint;
     }
@@ -79,7 +76,6 @@ public class SignFactory {
         mine.setTeam(miner.getTeam());
         mine.setMinerSignature(miner.getSignature());
         mine.setLatLng(latLng);
-        mine.setIcon(GameConfig.BITMAP_MINE);
         mine.setName("地雷");
         return mine;
     }
@@ -94,7 +90,6 @@ public class SignFactory {
     public static Miner produceMiner(LatLng latLng, int team) {
         Miner miner = new Miner(team);
         miner.setLatLng(latLng);
-        miner.setIcon(GameConfig.BITMAP_MINER);
         miner.setName("布雷者");
         return miner;
     }
@@ -102,7 +97,6 @@ public class SignFactory {
     public static Sapper produceSapper(LatLng latLng, int team) {
         Sapper sapper = new Sapper(team);
         sapper.setLatLng(latLng);
-        sapper.setIcon(GameConfig.BITMAP_SAPPER);
         sapper.setName("扫雷者");
         return sapper;
     }
@@ -110,16 +104,14 @@ public class SignFactory {
     public static Scout produceScout(LatLng latLng, int team) {
         Scout scout = new Scout(team);
         scout.setLatLng(latLng);
-        scout.setIcon(GameConfig.BITMAP_SCOUT);
         scout.setName("侦查兵");
         return scout;
     }
 
     public static Flag produceFlag(LatLng latLng, int team) {
         Flag flag = new Flag(latLng);
-        flag.setIcon(GameConfig.BITMAP_FLAG);
         flag.setTeam(team);
-        flag.setName("旗帜");
+        flag.setName(GameApplication.getApplication().getString(R.string.signname_flag));
         return flag;
     }
 }

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="initial_distance">
+        <item>较近</item>
+        <item>普通</item>
+        <item>较远</item>
+    </string-array>
+</resources>

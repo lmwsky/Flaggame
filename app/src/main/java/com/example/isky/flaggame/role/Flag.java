@@ -12,14 +12,15 @@ public class Flag extends FixedSign {
 
     public Flag() {
         setLatLng(0, 0);
-        setIcon(GameConfig.BITMAP_FLAG);
-
     }
 
     public Flag(LatLng latLng) {
         setLatLng(latLng.latitude, latLng.longitude);
-        setIcon(GameConfig.BITMAP_FLAG);
+    }
 
+    @Override
+    public int getIconResouseid() {
+        return GameConfig.BITMAP_FLAGARRAY[team % 3];
     }
 
     public boolean isOccupied() {
