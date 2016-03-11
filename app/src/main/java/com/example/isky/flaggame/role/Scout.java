@@ -1,6 +1,5 @@
 package com.example.isky.flaggame.role;
 
-import com.amap.api.maps2d.model.BitmapDescriptorFactory;
 import com.example.isky.flaggame.game.GameConfig;
 
 /**
@@ -18,14 +17,6 @@ public class Scout extends RoleSign {
         setDist_attract(GameConfig.DIST_ATTRACT_SCOUT);
         setDist_investigate(GameConfig.DIST_INVESTIGATE_SCOUT);
     }
-
-
-    @Override
-    public void setTeam(int team) {
-        super.setTeam(team);
-        setIcon(BitmapDescriptorFactory.fromResource(GameConfig.BITMAP_SCOUT[team % 3]));
-    }
-
     @Override
     public void skill() {
 
