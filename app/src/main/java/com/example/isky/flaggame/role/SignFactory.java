@@ -14,6 +14,20 @@ import util.RandUtil;
  */
 public class SignFactory {
     /**
+     * 产生角色屠夫
+     *
+     * @param latLng 坐标
+     * @param team   队伍
+     * @return 屠夫角色
+     */
+    public static Tufu produceTufu(LatLng latLng, int team) {
+        Tufu tufu = new Tufu(team);
+        tufu.setLatLng(latLng);
+        tufu.setName("屠夫");
+        return tufu;
+    }
+
+    /**
      * 在距离某个点的一定距离随机产生旗帜
      *
      * @param startpoint 起始点

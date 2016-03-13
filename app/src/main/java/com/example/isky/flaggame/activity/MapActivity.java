@@ -100,7 +100,7 @@ public class MapActivity extends Activity {
 
         ImageView icon = new ImageView(this);
         Resources resources = this.getResources();
-        Drawable drawable = resources.getDrawable(R.drawable.button_action);
+        Drawable drawable = resources.getDrawable(R.drawable.actionbar);
         icon.setImageDrawable(drawable);
 
         FloatingActionButton actionButton = new FloatingActionButton.Builder(this)

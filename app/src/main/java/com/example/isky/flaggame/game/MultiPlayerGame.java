@@ -170,14 +170,17 @@ public class MultiPlayerGame extends GameManager {
             int team = i / oneteamnum;
             RoleSign roleSign = null;
             PlayerManager.Player player = playerArrayList.get(i);
-            if (i % 3 == 0) {
+            if (i % GameConfig.ROLESIGNNUM == 0) {
                 roleSign = SignFactory.produceMiner(player.getLatLng(), team);
             }
-            if (i % 3 == 1) {
+            if (i % GameConfig.ROLESIGNNUM == 1) {
                 roleSign = SignFactory.produceSapper(player.getLatLng(), team);
             }
-            if (i % 3 == 2) {
+            if (i % GameConfig.ROLESIGNNUM == 2) {
                 roleSign = SignFactory.produceScout(player.getLatLng(), team);
+            }
+            if (i % GameConfig.ROLESIGNNUM == 3) {
+                roleSign = SignFactory.produceTufu(player.getLatLng(), team);
             }
             roleSigns.add(roleSign);
         }
@@ -214,7 +217,6 @@ public class MultiPlayerGame extends GameManager {
 
             }
         }
-
 
         Flag flag1 = SignFactory.produceFlag(RandUtil.moveToGoal(startlatLng, endlatLng, GameConfig.dist_flag * 1000), 0);
         Flag flag2 = SignFactory.produceFlag(RandUtil.moveToGoal(endlatLng, startlatLng, GameConfig.dist_flag * 1000), 1);

@@ -177,7 +177,7 @@ public abstract class GameManager {
                 if (circle != null)
                     circle.setCenter(latLng);
                 //游戏进行中才进行触雷判断
-                if (SignManager.isGameStarting()) {
+                if (SignManager.isGameStarting() && !((RoleSign) sign).isDead()) {
                     //检查是否触发炸弹
                     ArrayList<Mine> mines = SignManager.getInstance().getOtherTeamMine(sign.getTeam());
                     for (Mine mine : mines) {
@@ -232,7 +232,7 @@ public abstract class GameManager {
                 GameHandler.doGameEventInLocal(GameEventFactory.produceEventMove(sign));
 
                 //游戏在进行中才检查是否触发炸弹
-                if (SignManager.isGameStarting()) {
+                if (SignManager.isGameStarting() && !((RoleSign) sign).isDead()) {
                     /*检查是否触发炸弹*/
                     ArrayList<Mine> mines = SignManager.getInstance().getOtherTeamMine(sign.getTeam());
                     for (Mine mine : mines) {
@@ -250,6 +250,8 @@ public abstract class GameManager {
         @Override
         public void onDielistener(RoleSign roleSign) {
             if (roleSign instanceof Monster) {
+                roleSign.startmove();
+                SignManager.getInstance().remove(roleSign);
                 GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceShowToast(roleSign.getName() + "死亡~"));
                 GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceRevomeSign(roleSign));
             } else {

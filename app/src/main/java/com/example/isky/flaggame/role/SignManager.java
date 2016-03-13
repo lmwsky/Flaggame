@@ -58,8 +58,8 @@ public class SignManager {
     private GameManager gameManage;
     private ArrayList<PlayerManager.Player> allplayers = new ArrayList<>();
     private List<WalkStep> walkPathList;
-    private ArrayList boombitmaplist;
     private Map<String, String> RoleSignsignatureplayeridHashMap = new HashMap<>();
+    private ArrayList<String> doneEventid = new ArrayList<>();
 
     public static SignManager getInstance() {
         if (signManager == null)
@@ -123,7 +123,6 @@ public class SignManager {
         signatureSignMap.put(sign.getSignature(), sign);
         if (sign instanceof RoleSign) {
             allrolesignlist.add((RoleSign) sign);
-
             if (sign instanceof Monster)
                 monsterArrayList.add((Monster) sign);
         }
@@ -161,6 +160,7 @@ public class SignManager {
         if (sign == null)
             return;
         allsignlist.remove(sign);
+        signatureSignMap.remove(sign.getSignature());
         Marker marker = signMarkerMap.remove(sign);
         if (marker != null)
             marker.remove();
@@ -184,7 +184,6 @@ public class SignManager {
                 mineArrayList.remove(sign);
         }
     }
-
 
     /**
      * 将sign与Marker进行绑定,若已经有绑定则接触旧绑定
@@ -268,7 +267,6 @@ public class SignManager {
             circle.setVisible(false);
     }
 
-
     /**
      * 隐藏或显示某个sign，包括其攻击圈
      *
@@ -328,7 +326,6 @@ public class SignManager {
         return isWin(mainplayer.getTeam());
     }
 
-
     public Sign getSignBySignature(String signature) {
         return signatureSignMap.get(signature);
     }
@@ -356,7 +353,6 @@ public class SignManager {
                 return false;
         return true;
     }
-
 
     /**
      * 将sign的marker，circle移动到与sign相应的位置
@@ -511,7 +507,6 @@ public class SignManager {
         }
     }
 
-
     public void bindRoleSignWithPlayerid(String roleSignsignature, String playerid) {
         playeridRoleSignsignatureHashMap.put(playerid, roleSignsignature);
         RoleSignsignatureplayeridHashMap.put(roleSignsignature, playerid);
@@ -616,10 +611,35 @@ public class SignManager {
             resourceidarray = GameConfig.BITMAP_SAPPER;
         if (roleSign instanceof Scout)
             resourceidarray = GameConfig.BITMAP_SCOUT;
+        if (roleSign instanceof Tufu)
+            resourceidarray = GameConfig.BITMAP_TUFU;
 
         if (resourceidarray != null)
             return resourceidarray[index][roleSign.getTeam() % 3];
         else
             return R.drawable.location_marker;
+    }
+
+    /**
+     * 将某个事件标志为已经完成
+     *
+     * @param id
+     */
+    public void markerEvent(String id) {
+        doneEventid.add(id);
+    }
+
+    /**
+     * 查询某个事件是否已经做了
+     *
+     * @param id
+     * @return
+     */
+    public boolean isEventDone(String id) {
+        for (String doneid : doneEventid) {
+            if (doneid.equals(id))
+                return true;
+        }
+        return false;
     }
 }

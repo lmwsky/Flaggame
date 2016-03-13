@@ -43,7 +43,7 @@ public class Server {
     public static final String TABLEID_PLAYER = "56d3ba587bbf197f399b96f1";
     public static final String TABLEID_EVENT = "56d8f970305a2a3288be05a3";
     private static final long UPDATEPLAYERLOCATION_DELAY = 1100;
-    private static final long DELAY_QUERY = 1000;//每1s查询一次事件
+    private static final long DELAY_QUERY = 300;//每1s查询一次事件
     private static Server server;
     private HashMap<String, String> tablenametableidmap = new HashMap<>();//tablename 与 tableid的map
     private HashMap<Object, String> objecttableidmap = new HashMap<>();//object 与tableid的map
@@ -498,7 +498,6 @@ public class Server {
                 for (GameEventFactory.GameEvent gameevent : gameEventlsit) {
                     Log.d("event", "start do event from server");
                     GameHandler.doGameEventFromServer(gameevent);
-
                 }
             }
         };
@@ -618,6 +617,11 @@ public class Server {
                         Log.d("event", "return data search event");
                         ArrayList<GameEventFactory.GameEvent> loadgameevent = new ArrayList<>();
                         for (CloudItem item : clouditems) {
+                            String id = item.getID();
+                            if (SignManager.getInstance().isEventDone(id))
+                                continue;
+                            else
+                                SignManager.getInstance().markerEvent(id);
                             try {
                                 GameEventFactory.GameEvent gameEvent = new GameEventFactory.GameEvent();
                                 gameEvent.setRoomid(item.getCustomfield().get("roomid"));
@@ -631,7 +635,6 @@ public class Server {
                                     gameEvent.obj = gson.fromJson(item.getCustomfield().get("gson"), clss);
                                     object_idmap.put(gameEvent, item.getID());//将id映射保存到_idmap
                                 }
-
                                 loadgameevent.add(gameEvent);
                                 queryTask.setMin_id(Integer.parseInt(item.getID()));
                             } catch (ClassNotFoundException e) {

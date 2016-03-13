@@ -63,19 +63,6 @@ public abstract class Sign {
     }
 
     /**
-     * 获得Sign的图标描述
-     *
-     * @return 若尚未初始化则为null
-     */
-    public BitmapDescriptor getIcon() {
-        return icon;
-    }
-
-    public void setIcon(BitmapDescriptor icon) {
-        this.icon = icon;
-    }
-
-    /**
      * 获取标志的文字描述
      *
      * @return

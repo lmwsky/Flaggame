@@ -17,10 +17,7 @@ import com.example.isky.flaggame.game.GameConfig;
  */
 public class CreateSingleGameConfigDialog extends Dialog {
 
-    /*private RadioGroup initialDistance;
-    private RadioGroup monsterNumber;
-    private RadioGroup playerType;
-    private RadioGroup difficulty;*/
+
     private Spinner initialDistance;
     private Spinner monsterNumber;
     private Spinner playerType;
@@ -59,6 +56,9 @@ public class CreateSingleGameConfigDialog extends Dialog {
                 break;
             case 2:
                 type = GameConfig.ROLE_SCOUT;
+                break;
+            case 3:
+                type = GameConfig.ROLE_TUFU;
                 break;
             default:
                 break;

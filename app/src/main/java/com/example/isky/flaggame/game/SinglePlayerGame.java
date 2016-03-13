@@ -9,11 +9,8 @@ import com.amap.api.maps2d.model.LatLng;
 import com.amap.api.services.route.WalkPath;
 import com.amap.api.services.route.WalkStep;
 import com.example.isky.flaggame.role.Flag;
-import com.example.isky.flaggame.role.Miner;
 import com.example.isky.flaggame.role.Monster;
 import com.example.isky.flaggame.role.RoleSign;
-import com.example.isky.flaggame.role.Sapper;
-import com.example.isky.flaggame.role.Scout;
 import com.example.isky.flaggame.role.SignFactory;
 import com.example.isky.flaggame.role.SignManager;
 import com.example.isky.flaggame.server.LocationServiceManager;
@@ -65,22 +62,23 @@ public class SinglePlayerGame extends GameManager {
     private void InitGame(final LatLng startlatlng) {
 
         /*生成各种sign及相应的marker，将其加入SignMarkerManager的管理*/
-        RoleSign mainPlayer = new Miner(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
+        RoleSign mainPlayer = SignFactory.produceMiner(startlatlng, GameConfig.SINGLEGAME_MAINPLAYERTEAM);
         switch (GameConfig.mainplayerroletype) {
             case GameConfig.ROLE_MINER:
-                mainPlayer = new Miner(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
+                mainPlayer = SignFactory.produceMiner(startlatlng, GameConfig.SINGLEGAME_MAINPLAYERTEAM);
                 break;
             case GameConfig.ROLE_SAPPER:
-                mainPlayer = new Sapper(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
-
+                mainPlayer = SignFactory.produceSapper(startlatlng, GameConfig.SINGLEGAME_MAINPLAYERTEAM);
                 break;
             case GameConfig.ROLE_SCOUT:
-                mainPlayer = new Scout(GameConfig.SINGLEGAME_MAINPLAYERTEAM);
+                mainPlayer = SignFactory.produceScout(startlatlng, GameConfig.SINGLEGAME_MAINPLAYERTEAM);
+                break;
+            case GameConfig.ROLE_TUFU:
+                mainPlayer = SignFactory.produceTufu(startlatlng, GameConfig.SINGLEGAME_MAINPLAYERTEAM);
                 break;
             default:
                 break;
         }
-        mainPlayer.setLatLng(startlatlng);
         GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddMainPlayerRoleSignInSingleGame(mainPlayer));
         //生成旗帜
         final Flag flag = SignFactory.produceFlag(startlatlng, GameConfig.dist_flag, GameConfig.SINGLEGAME_MONSTERTEAM);

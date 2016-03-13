@@ -17,4 +17,19 @@
     <string name="setting">设置</string>
     <string name="fail_getplayer">获取用户失败，无法多人游戏</string>
     <string name="signname_flag">旗帜</string>
+    <string name="quickgame">快速加入</string>
+    <string name="createroom">创建房间</string>
+    <string name="refresh">刷新</string>
+    <string name="back">返回</string>
+    <string name="multigmae">多人游戏</string>
+    <string name="singlegame">单人游戏</string>
+    <string name="exit">退出</string>
+    <string name="leaveroom">离开房间</string>
+    <string name="defautroomname">一起来玩吧</string>
+    <string name="defaultplayname">JScarlet</string>
+    <string name="roomname">房间名</string>
+    <string name="maxplayer">最大人数：</string>
+    <string name="playernumtwo">2</string>
+    <string name="playernumsix">6</string>
+    <string name="playernumten">10</string>
 </resources>

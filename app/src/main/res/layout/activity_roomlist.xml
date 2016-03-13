@@ -4,52 +4,93 @@
     android:layout_height="match_parent">
 
     <LinearLayout
-        android:id="@+id/left"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
+        android:id="@+id/bottombar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_margin="10dip"
         android:gravity="center_vertical"
-        android:orientation="vertical">
+        android:orientation="horizontal">
 
         <Button
             android:id="@+id/bt_quickgame"
-            android:layout_width="wrap_content"
+
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="快速加入" />
+            android:layout_weight="1"
+            android:background="@drawable/btn_selector"
+            android:singleLine="true"
+            android:text="@string/quickgame"
+
+            android:textSize="15sp" />
 
         <Button
             android:id="@+id/bt_createroom"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
+
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="创建房间" />
+            android:layout_weight="1"
+            android:background="@drawable/btn_selector"
+            android:singleLine="true"
+            android:text="@string/createroom"
+            android:textSize="15sp" />
 
         <Button
             android:id="@+id/bt_refresh"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="刷新" />
+            android:layout_weight="1"
+            android:background="@drawable/btn_selector"
+
+            android:singleLine="true"
+            android:text="@string/refresh"
+            android:textSize="15sp" />
 
         <Button
             android:id="@+id/bt_back"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="返回" />
+            android:layout_weight="1"
+            android:background="@drawable/btn_selector"
+            android:singleLine="true"
+            android:text="@string/back"
+            android:textSize="15sp" />
     </LinearLayout>
 
     <LinearLayout
-        android:id="@+id/right"
+        android:id="@+id/lv_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_toRightOf="@id/left">
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/bottombar"
+        android:layout_below="@+id/titlebar"
+        android:layout_margin="10dip">
 
         <ListView
             android:id="@+id/lv_room"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="wrap_content"
+            android:fastScrollEnabled="true" />
+    </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/titlebar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentTop="true">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/theme_bakcgroung_green"
+            android:gravity="center"
+            android:padding="10dp"
+            android:text="@string/multigmae"
+            android:textColor="@color/white"
+            android:textSize="25sp" />
     </LinearLayout>
 
 </RelativeLayout>

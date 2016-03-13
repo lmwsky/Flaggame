@@ -4,7 +4,7 @@ import com.example.isky.flaggame.game.GameConfig;
 
 /**
  * Created by Administrator on 2016/2/6.
- * 游戏角色 侦查员,拥有被动技能技能，侦查范围远大于其他角色
+ * 游戏角色 指挥官,拥有被动技能技能，侦查范围远大于其他角色，但是攻击范围最小
  */
 public class Scout extends RoleSign {
 
@@ -17,6 +17,7 @@ public class Scout extends RoleSign {
         setDist_attract(GameConfig.DIST_ATTRACT_SCOUT);
         setDist_investigate(GameConfig.DIST_INVESTIGATE_SCOUT);
     }
+
     @Override
     public void skill() {
 

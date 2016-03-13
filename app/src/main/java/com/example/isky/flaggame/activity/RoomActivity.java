@@ -52,13 +52,13 @@ public class RoomActivity extends Activity {
         final RoomManage.Room currentRoom = PlayerManager.getInstance().getCurrentRoom();
 
         TextView tv_room_name = (TextView) (findViewById(R.id.tv_room_name));
-        tv_room_name.setText(currentRoom.getRoomname());
+        tv_room_name.setText(currentRoom != null ? currentRoom.getRoomname() : "一起来玩吧");
 
         final TextView tv_real_number = (TextView) (findViewById(R.id.tv_real_number));
-        tv_real_number.setText(currentRoom.getPlayersnum() + "");
+        tv_real_number.setText((currentRoom != null ? currentRoom.getPlayersnum() : 1) + "");
 
         TextView tv_max_number = (TextView) (findViewById(R.id.tv_max_number));
-        tv_max_number.setText(currentRoom.getNeedplayernum() + "");
+        tv_max_number.setText((currentRoom != null ? currentRoom.getNeedplayernum() : 2) + "");
 
 
         ArrayList<Object> players = new ArrayList<>();

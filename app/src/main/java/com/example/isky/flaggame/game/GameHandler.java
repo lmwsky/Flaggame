@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
+import com.amap.api.maps2d.model.LatLng;
 import com.example.isky.flaggame.role.FixedSign;
 import com.example.isky.flaggame.role.Flag;
 import com.example.isky.flaggame.role.Mine;
@@ -55,16 +56,16 @@ public class GameHandler extends Handler {
      * 添加sign到地图
      */
     public final static int MSG_ADDSIGN_MULTI = 11;
-    public static final int MSG_ADDSIGN = 12;//通用的addsign
+    public final static int MSG_ADDSIGN = 12;//通用的addsign
 
 
     /**
      * 显示炸弹爆炸动画
      */
     public final static int MSG_BOOM = 13;
-    public static final int MSG_WINGAME = 14;
-    public static final int MSG_BOOMSWEEP = 15;
-    public static final int MSG_OCCUPYFLAGE = 16;
+    public final static int MSG_WINGAME = 14;
+    public final static int MSG_BOOMSWEEP = 15;
+    public final static int MSG_OCCUPYFLAGE = 16;
 
     /**
      * 将一个rolesign直接设置为死的状态，并且更新图标
@@ -280,10 +281,10 @@ public class GameHandler extends Handler {
             }
             break;
             case MSG_BOOM: {
-                SignManager.getInstance().remove((String) gsonObject);
                 Mine mine = (Mine) SignManager.getInstance().getSignBySignature((String) gsonObject);
-                SignManager.getInstance().remove(mine);
-                SignManager.getInstance().showBoomAmination(mine.getLatLng());
+                LatLng latLng = mine.getLatLng();
+                SignManager.getInstance().remove((String) gsonObject);
+                SignManager.getInstance().showBoomAmination(latLng);
             }
             break;
                     /*在地图上显示sign最新的位置*/
