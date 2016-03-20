@@ -12,6 +12,7 @@ import java.util.ArrayList;
 
 /**
  * Created by x1832 on 2016/2/29.
+ * 用来计算游戏得分的类
  */
 public class GetScore {
     public static void getAttackScore(RoleSign attacker, RoleSign beattacker, int score) {

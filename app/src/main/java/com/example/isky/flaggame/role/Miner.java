@@ -12,6 +12,7 @@ import util.GetScore;
  */
 public class Miner extends RoleSign {
     private int num_mine = 0;
+    private int max_mine = GameConfig.MAX_NUM_MINE;
 
     public Miner() {
         this(0);
@@ -23,16 +24,33 @@ public class Miner extends RoleSign {
         setDist_attract(GameConfig.DIST_ATTRACT_MINER);
     }
 
-
+    /**
+     * 技能：放置地雷，同时存在的地雷不能超过上限
+     */
     @Override
     public void skill() {
         if (isDead)
             return;
-        if (num_mine >= GameConfig.MAX_NUM_MINE)
+        if (num_mine >= max_mine)
             return;
         num_mine++;
         Mine mine = SignFactory.produceMine(this, getLatLng());
         GetScore.putMineScore(this);
         GameHandler.doGameEventAndSendifNeed(GameEventFactory.produceAddFixedSignEvent(mine));
+    }
+
+    /**
+     * 减少一个目前放置的炸弹的数目
+     */
+    public void reduceExistMineNum() {
+        if (num_mine > 0)
+            num_mine--;
+    }
+
+    /**
+     * 增加一个最多能同时存在的炸弹数目
+     */
+    public void addMax_mine() {
+        max_mine++;
     }
 }

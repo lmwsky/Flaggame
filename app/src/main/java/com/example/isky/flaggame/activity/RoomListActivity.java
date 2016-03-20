@@ -113,7 +113,7 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
                 ArrayList<RoomManage.Room> roomArrayList = new ArrayList<>();
                 for (Object o : datas) {
                     RoomManage.Room room = (RoomManage.Room) o;
-                    if (room.isAbandon())
+                    if (room.isAbandon() || room.isStarting())
                         continue;
                     roomArrayList.add(room);
                 }
@@ -141,6 +141,7 @@ public class RoomListActivity extends Activity implements AdapterView.OnItemClic
             case R.id.bt_quickgame: {
                 ArrayList<RoomManage.Room> roomArrayList = RoomManage.getInstance().getRoomlist();
                 if (roomArrayList != null && roomArrayList.size() > 0) {
+                    //TODO 快速加入功能待完成
                     final RoomManage.Room room = roomArrayList.get(0);
                     PlayerManager.getInstance().enterRoom(room, new PlayerManager.OnEnterOrLeaveRoomListener() {
 

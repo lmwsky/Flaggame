@@ -12,6 +12,8 @@ import util.MapUtil;
 public class Mine extends FixedSign {
     private double influence;
     private String minerSignature;
+    /*是否已经爆炸*/
+    private boolean isBoom = false;
 
     public Mine() {
         setInfluence(GameConfig.DIST_MINE_INFLUENCE);
@@ -48,7 +50,16 @@ public class Mine extends FixedSign {
      * 地雷爆炸
      */
     public void boom() {
+        isBoom = true;
         notifyOnFixedSignOnBoomListeners();
+    }
+
+    public boolean isBoom() {
+        return isBoom;
+    }
+
+    public void setIsBoom(boolean isBoom) {
+        this.isBoom = isBoom;
     }
 
     /**

@@ -25,6 +25,7 @@ public class CreateSingleGameConfigDialog extends Dialog {
     private EditText flagNumber;
     private Button positiveButton;
     private Button negativeButton;
+    private double aiRace;
 
     public CreateSingleGameConfigDialog(Context context) {
         super(context);
@@ -106,6 +107,23 @@ public class CreateSingleGameConfigDialog extends Dialog {
         return distance;
     }
 
+    /**
+     * 获取选择的旗帜的数目
+     *
+     * @return 旗帜的数目
+     */
+    public int getFlagsNum() {
+        return 1;
+    }
+
+    /**
+     * 获取游戏难度
+     *
+     * @return 游戏难度
+     */
+    public int getDifficulty() {
+        return difficulty.getSelectedItemPosition();
+    }
 
     public void setOnPositiveListener(View.OnClickListener listener) {
         positiveButton.setOnClickListener(listener);
@@ -113,5 +131,24 @@ public class CreateSingleGameConfigDialog extends Dialog {
 
     public void setOnNegativeListener(View.OnClickListener listener) {
         negativeButton.setOnClickListener(listener);
+    }
+
+    public double getAiRace() {
+        int position = difficulty.getSelectedItemPosition();
+        double aiRace = GameConfig.AI_RACE_SLOW;
+        switch (position) {
+            case GameConfig.DIFFICULTY_EASY:
+                aiRace = GameConfig.AI_RACE_SLOW;
+                break;
+            case GameConfig.DIFFICULTY_NORMAL:
+                aiRace = GameConfig.AI_RACE_NOMAL;
+                break;
+            case GameConfig.DIFFICULTY_DIFFICUL:
+                aiRace = GameConfig.AI_RACE_FAST;
+                break;
+            default:
+                break;
+        }
+        return aiRace;
     }
 }

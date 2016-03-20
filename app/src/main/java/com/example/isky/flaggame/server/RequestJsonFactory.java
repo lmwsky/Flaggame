@@ -2,6 +2,7 @@ package com.example.isky.flaggame.server;
 
 import android.util.Log;
 
+import com.amap.api.maps2d.model.LatLng;
 import com.example.isky.flaggame.game.GameEventFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
@@ -10,8 +11,6 @@ import com.google.gson.JsonObject;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import util.JsonUtil;
-
 /**
  * Created by isky on 2016/2/21.
  * 组装联网请求中data的json
@@ -19,10 +18,20 @@ import util.JsonUtil;
 public class RequestJsonFactory {
     private JSONObject jsonObject = new JSONObject();
 
+    public static String get_locationstr(double latitude, double longitude) {
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#.######");
+        return df.format(longitude) + "," + df.format(latitude);
+    }
+
+    public static String get_locationstr(LatLng latLng) {
+        java.text.DecimalFormat df = new java.text.DecimalFormat("#.######");
+        return df.format(latLng.longitude) + "," + df.format(latLng.latitude);
+    }
+
     /**
      * create data 必选
      *
-     * @param _name
+     * @param _name 设置为名字
      * @return
      * @throws JSONException
      */
@@ -64,7 +73,7 @@ public class RequestJsonFactory {
 
         java.text.DecimalFormat df = new java.text.DecimalFormat("#.######");
         try {
-            jsonObject.put("_location", JsonUtil.get_locationstr(latitude, longitude));
+            jsonObject.put("_location", get_locationstr(latitude, longitude));
         } catch (JSONException e) {
             e.printStackTrace();
         }

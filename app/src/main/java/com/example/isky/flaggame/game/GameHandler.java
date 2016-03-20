@@ -9,10 +9,11 @@ import com.amap.api.maps2d.model.LatLng;
 import com.example.isky.flaggame.role.FixedSign;
 import com.example.isky.flaggame.role.Flag;
 import com.example.isky.flaggame.role.Mine;
+import com.example.isky.flaggame.role.Miner;
 import com.example.isky.flaggame.role.RoleSign;
 import com.example.isky.flaggame.role.Sign;
 import com.example.isky.flaggame.role.SignManager;
-import com.example.isky.flaggame.role.WalkPath2AI;
+import com.example.isky.flaggame.role.WalkPathAI;
 import com.example.isky.flaggame.server.LocationServiceManager;
 import com.example.isky.flaggame.server.PlayerManager;
 import com.example.isky.flaggame.server.Server;
@@ -282,6 +283,9 @@ public class GameHandler extends Handler {
             break;
             case MSG_BOOM: {
                 Mine mine = (Mine) SignManager.getInstance().getSignBySignature((String) gsonObject);
+                mine.setIsBoom(true);
+                Miner miner = (Miner) SignManager.getInstance().getSignBySignature(mine.getMinerSignature());
+                miner.reduceExistMineNum();
                 LatLng latLng = mine.getLatLng();
                 SignManager.getInstance().remove((String) gsonObject);
                 SignManager.getInstance().showBoomAmination(latLng);
@@ -300,9 +304,10 @@ public class GameHandler extends Handler {
                 break;
             case MSG_BINDWALKPATHAI: {
                 Sign sign = SignManager.getInstance().getSignBySignature((String) gsonObject);
+
                 if (sign != null) {
-                    ((RoleSign) sign).setAi(new WalkPath2AI(sign.getLatLng(),
-                            SignManager.getInstance().getWalkPathList(), sign.getSignature()));
+                    ((RoleSign) sign).setAi(new WalkPathAI(sign.getLatLng(),
+                            SignManager.getInstance().getWalkPathList(), sign.getSignature(), GameConfig.race_ai));
                 }
             }
             break;

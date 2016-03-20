@@ -32,7 +32,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 import util.GameApplication;
-import util.JsonUtil;
 
 /**
  * Created by isky on 2016/2/22.
@@ -425,7 +424,7 @@ public class Server {
     }
 
     public void sendPlayerLocation(PlayerManager.Player player) {
-        updateData(TABLEID_PLAYER, player.get_id(), "_location", JsonUtil.get_locationstr(player.getLatLng()), null);
+        updateData(TABLEID_PLAYER, player.get_id(), "_location", RequestJsonFactory.get_locationstr(player.getLatLng()), null);
     }
 
     /**

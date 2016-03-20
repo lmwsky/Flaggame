@@ -14,6 +14,9 @@ public class GameConfig {
     public final static int BITMAP_TUFU_GREEN = R.drawable.tufugreen;
     public final static int BITMAP_TUFU_DEAD = R.drawable.tufudead;
 
+    public static final int DIFFICULTY_EASY = 0;
+    public static final int DIFFICULTY_NORMAL = 1;
+    public static final int DIFFICULTY_DIFFICUL = 2;
 
     public static final int COLOR_ATTRACTCIRCLE_RED = Color.argb(100, 255, 102, 501);
     public static final int COLOR_ATTRACTCIRCLE_BLUE = Color.argb(100, 0, 102, 204);
@@ -86,6 +89,9 @@ public class GameConfig {
     };
     public static final int ROLE_TUFU = 3;
     public static final int ROLESIGNNUM = 4;
+    public static final double AI_RACE_SLOW = 0.005;
+    public static final double AI_RACE_NOMAL = 0.007;
+    public static final double AI_RACE_FAST = 0.009;
     private static final int BITMAP_SAPPER_DEAD = R.drawable.sapperdie;
     public final static int BITMAP_SAPPER[][] = {
             {BITMAP_SAPPER_BLUE, BITMAP_SAPPER_RED, BITMAP_SAPPER_GREEN},
@@ -101,6 +107,9 @@ public class GameConfig {
     public static double dist_flag = DIST_FLAG_FAR;
     public static int num_monsters = NUM_MONSTER_MIDDLE;
     public static int gametype = GAMETYPE_SINGLEGAME;
+    public static int difficulty = DIFFICULTY_EASY;
+    public static int flagnum = 1;
+    public static double race_ai = 0.005;//km/s
     public static int mainplayerBitmapDie = R.drawable.minerblue;
     public static int mainplayerBitmapLive = R.drawable.location_marker;
     public static double dist_monster = dist_flag;
@@ -110,5 +119,43 @@ public class GameConfig {
      * 加载图片资源
      */
     public static void initBitmap() {
+    }
+
+    /**
+     * 设置mainplayer 控制的角色的类型
+     *
+     * @param mainPlayerRoleType，必须是GameConfig.ROLE_XXX 已经在GameConfig中定义的常量，若不是则会抛出异常
+     */
+    public static void setMainPlayerRoleSign(int mainPlayerRoleType) {
+        switch (mainPlayerRoleType) {
+            case ROLE_MINER:
+                mainplayerBitmapLive = BITMAP_MINER_BLUE;
+                mainplayerBitmapLive = BITMAP_MINER_BLUE;
+                bitmap_skill = BITMAP_SKILL_MINER;
+                break;
+            case ROLE_SAPPER:
+                mainplayerBitmapLive = BITMAP_SAPPER_BLUE;
+                mainplayerBitmapLive = BITMAP_SAPPER_BLUE;
+                bitmap_skill = BITMAP_SKILL_SAPPER;
+                break;
+            case ROLE_SCOUT:
+                mainplayerBitmapLive = BITMAP_SCOUT_BLUE;
+                mainplayerBitmapLive = BITMAP_SCOUT_BLUE;
+                bitmap_skill = BITMAP_SKILL_SCOUT;
+                break;
+            case ROLE_TUFU:
+                mainplayerBitmapLive = BITMAP_TUFU_BLUE;
+                mainplayerBitmapLive = BITMAP_TUFU_BLUE;
+                bitmap_skill = BITMAP_SKILL_TUFU;
+                break;
+            default:
+                try {
+                    throw new Exception("unknow rolesign type");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+        }
+        GameConfig.mainplayerroletype = mainPlayerRoleType;
     }
 }

@@ -142,7 +142,7 @@ public class RandUtil {
         double deltaLat = goalLat - startLat;
         double deltaLog = goalLog - startLog;
 
-        double totaldistance = MapUtil.getDistance(start, goal);
+        double totaldistance = MapUtil.getDistance(start, goal);//单位m
 
         double latitude, longitude;
 

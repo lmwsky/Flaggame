@@ -19,23 +19,21 @@ import util.GameApplication;
  * 对于定位服务的封装
  */
 public class LocationServiceManager extends LocationInfoSender implements LocationSource, AMapLocationListener {
+    private static LocationServiceManager locationServiceManager;
+    ArrayList<OnLocationChangedListener> onLocationChangedListeners = new ArrayList<>();
     //声明AMapLocationClient类对象
     private AMapLocationClient mLocationClient = null;
     //声明mLocationOption对象
     private AMapLocationClientOption mLocationOption = null;
 
-    private static LocationServiceManager locationServiceManager;
-
-    ArrayList<OnLocationChangedListener> onLocationChangedListeners = new ArrayList<>();
+    private LocationServiceManager() {
+        initClient();
+    }
 
     public static LocationServiceManager getInstance() {
         if (locationServiceManager == null)
             locationServiceManager = new LocationServiceManager();
         return locationServiceManager;
-    }
-
-    private LocationServiceManager() {
-        initClient();
     }
 
     private void initClient() {
@@ -111,10 +109,10 @@ public class LocationServiceManager extends LocationInfoSender implements Locati
             initClient();
         }
         synchronized (onLocationChangedListeners) {
-        if (onLocationChangedListener != null && !onLocationChangedListeners.contains(onLocationChangedListener))
+            if (onLocationChangedListener != null && !onLocationChangedListeners.contains(onLocationChangedListener))
 
                 onLocationChangedListeners.add(onLocationChangedListener);
-            }
+        }
         if (!mLocationClient.isStarted()) {
             mLocationClient.startLocation();
             Log.d("hhh", "激活定位 size=" + onLocationChangedListeners.size());
@@ -138,8 +136,11 @@ public class LocationServiceManager extends LocationInfoSender implements Locati
         if (aMapLocation != null) {
             if (aMapLocation.getErrorCode() == 0) {
                 synchronized (onLocationChangedListeners) {
+                    java.text.DecimalFormat df = new java.text.DecimalFormat("#.######");
                     //发送地点信息给接收者
-                    send(new LatLng(aMapLocation.getLatitude(),aMapLocation.getLongitude()));
+                    LatLng latLng = new LatLng(Double.parseDouble(df.format(aMapLocation.getLatitude())),
+                            Double.parseDouble(df.format(aMapLocation.getLongitude())));
+                    send(latLng);
                     for (OnLocationChangedListener mlistener : onLocationChangedListeners)
                         mlistener.onLocationChanged(aMapLocation);
                 }

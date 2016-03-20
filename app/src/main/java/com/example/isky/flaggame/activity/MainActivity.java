@@ -27,7 +27,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
             PlayerManager.getInstance().getMainplayer(new PlayerManager.OnCreateOrGetPlayerListener() {
                 @Override
                 public void OnCreateOrGetPlayerSuccess(@NonNull PlayerManager.Player player) {
-                    ToastUtil.showshortToast(MainActivity.this, "欢迎" + player.getPlayername() + " ~~~");
+                    ToastUtil.showshortToast(MainActivity.this, getString(R.string.welcome) + player.getPlayername());
                     player.bindMainplayerAsLocationSender();
                     setView();
                     Button bt_multi = (Button) MainActivity.this.findViewById(R.id.bt_multi);
@@ -59,33 +59,11 @@ public class MainActivity extends Activity implements View.OnClickListener {
                         GameConfig.gametype = GameConfig.GAMETYPE_SINGLEGAME;
                         GameConfig.num_monsters = createSingleGameConfigDialog.getMonsterNum();
                         GameConfig.dist_flag = createSingleGameConfigDialog.getFlagDistance();
-                        GameConfig.mainplayerroletype = createSingleGameConfigDialog.getMainPlayerRoleType();
-
-                        switch (GameConfig.mainplayerroletype) {
-                            case GameConfig.ROLE_MINER:
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_MINER_BLUE;
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_MINER_BLUE;
-                                GameConfig.bitmap_skill = GameConfig.BITMAP_SKILL_MINER;
-                                break;
-                            case GameConfig.ROLE_SAPPER:
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_SAPPER_BLUE;
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_SAPPER_BLUE;
-                                GameConfig.bitmap_skill = GameConfig.BITMAP_SKILL_SAPPER;
-                                break;
-                            case GameConfig.ROLE_SCOUT:
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_SCOUT_BLUE;
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_SCOUT_BLUE;
-                                GameConfig.bitmap_skill = GameConfig.BITMAP_SKILL_SCOUT;
-                                break;
-                            case GameConfig.ROLE_TUFU:
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_TUFU_BLUE;
-                                GameConfig.mainplayerBitmapLive = GameConfig.BITMAP_TUFU_BLUE;
-                                GameConfig.bitmap_skill = GameConfig.BITMAP_SKILL_TUFU;
-                                break;
-                            default:
-                                break;
-                        }
+                        GameConfig.setMainPlayerRoleSign(createSingleGameConfigDialog.getMainPlayerRoleType());
                         GameConfig.dist_monster = GameConfig.dist_flag;
+                        GameConfig.flagnum = createSingleGameConfigDialog.getFlagsNum();
+                        GameConfig.difficulty = createSingleGameConfigDialog.getDifficulty();
+                        GameConfig.race_ai = createSingleGameConfigDialog.getAiRace();
                         Intent intent = new Intent();
                         intent.setClass(MainActivity.this, MapActivity.class);
                         startActivityForResult(intent, 0);
@@ -100,17 +78,19 @@ public class MainActivity extends Activity implements View.OnClickListener {
             }
             break;
             case R.id.bt_multi: {
-                Intent intent = new Intent();
-                intent.setClass(this, RoomListActivity.class);
                 GameConfig.gametype = GameConfig.GAMETYPE_MULTIPLAYER;
 
+                Intent intent = new Intent();
+                intent.setClass(this, RoomListActivity.class);
                 startActivity(intent);
             }
             break;
             case R.id.bt_about:
-                ToastUtil.showshortToast(this, getString(R.string.about));
+                //TODO 完善关于界面，目前显示的是更新内容
+                ToastUtil.showshortToast(this, getString(R.string.updateContent));
                 break;
             case R.id.bt_settings:
+                //TODO 完善设置，可以添加背景音乐
                 ToastUtil.showshortToast(this, getString(R.string.setting));
                 break;
             case R.id.bt_exit:
@@ -123,6 +103,9 @@ public class MainActivity extends Activity implements View.OnClickListener {
         }
     }
 
+    /**
+     * 设置控件及其监听器
+     */
     public void setView() {
         Button bt_singlegame = (Button) findViewById(R.id.bt_single);
         bt_singlegame.setOnClickListener(this);
@@ -133,8 +116,14 @@ public class MainActivity extends Activity implements View.OnClickListener {
 
         Button button_settings = (Button) findViewById(R.id.bt_settings);
         button_settings.setOnClickListener(this);
+
+        Button button_exit = (Button) findViewById(R.id.bt_exit);
+        button_exit.setOnClickListener(this);
     }
 
+    /**
+     * 显示输入用户名的按钮
+     */
     public void showEnterPlayerNameDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
         builder.setTitle(getString(R.string.hint_enterplayername));
@@ -151,7 +140,7 @@ public class MainActivity extends Activity implements View.OnClickListener {
                     PlayerManager.getInstance().createMainplayer(playname, new PlayerManager.OnCreateOrGetPlayerListener() {
                         @Override
                         public void OnCreateOrGetPlayerSuccess(@NonNull PlayerManager.Player player) {
-                            ToastUtil.showshortToast(MainActivity.this, "欢迎" + player.getPlayername() + " ~~~");
+                            ToastUtil.showshortToast(MainActivity.this, getString(R.string.welcome) + player.getPlayername() + " ~~~");
                             player.bindMainplayerAsLocationSender();
                             setView();
                             Button bt_multi = (Button) MainActivity.this.findViewById(R.id.bt_multi);

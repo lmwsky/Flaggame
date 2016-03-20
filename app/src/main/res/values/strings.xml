@@ -32,4 +32,6 @@
     <string name="playernumtwo">2</string>
     <string name="playernumsix">6</string>
     <string name="playernumten">10</string>
+    <string name="welcome">欢迎</string>
+    <string name="updateContent">更新：支持难度选择，不同难度ai移动速度不一样</string>
 </resources>
